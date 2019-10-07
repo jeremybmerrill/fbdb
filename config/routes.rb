@@ -3,4 +3,7 @@ Rails.application.routes.draw do
 
   get "payers", to: "payers#index"
   get "payers/:id", to: "payers#show"
+
+  get "pages", to: "pages#index"
+  get "pages/:id", to: "pages#show"
 end
