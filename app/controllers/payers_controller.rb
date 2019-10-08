@@ -22,7 +22,6 @@ class PayersController < ApplicationController
 
 		# TODO: domain names linked to in ads (TODO: has to come from FBPAC or AdLibrary collector)
 
-
 		respond_to do |format|
 		  format.html
 		  format.json { render json: {

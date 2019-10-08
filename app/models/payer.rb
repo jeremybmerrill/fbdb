@@ -22,7 +22,7 @@ class Payer < ApplicationRecord
 	# TODO should go in a mixin.
 	# TODO: should happen in SQL.
 	def topic_breakdown
-		breakdown = Hash[*Payer.last.ads.unscope(:order).joins(:ad_topics).joins(:topics).select("topic, sum(coalesce(ad_topics.proportion, cast(1.0 as double precision))) as proportion").group(:topic).map{|a| [a.topic, a.proportion]}.flatten]
+		breakdown = Hash[*ads.unscope(:order).joins(:ad_topics).joins(:topics).select("topic, sum(coalesce(ad_topics.proportion, cast(1.0 as double precision))) as proportion").group(:topic).map{|a| [a.topic, a.proportion]}.flatten]
 		total = breakdown.values.reduce(&:+)
 		breakdown_proportions = {}
 		breakdown.each do | topic, amt |
