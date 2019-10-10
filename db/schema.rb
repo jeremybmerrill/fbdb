@@ -65,6 +65,39 @@ ActiveRecord::Schema.define(version: 2019_10_08_172936) do
     t.index ["ad_archive_id"], name: "demo_impressions_archive_id_idx"
   end
 
+  create_table "fbpac_ads", id: :bigint, default: nil, force: :cascade do |t|
+    t.text "html", null: false
+    t.integer "political", null: false
+    t.integer "not_political", null: false
+    t.text "title", null: false
+    t.text "message", null: false
+    t.text "thumbnail", null: false
+    t.datetime "created_at", default: -> { "now()" }, null: false
+    t.datetime "updated_at", default: -> { "now()" }, null: false
+    t.text "lang", null: false
+    t.text "images", null: false, array: true
+    t.integer "impressions", default: 1, null: false
+    t.float "political_probability", default: 0.0, null: false
+    t.text "targeting"
+    t.boolean "suppressed", default: false, null: false
+    t.jsonb "targets", default: []
+    t.text "advertiser"
+    t.jsonb "entities", default: []
+    t.text "page"
+    t.string "lower_page"
+    t.text "targetings", array: true
+    t.text "paid_for_by"
+    t.integer "targetedness"
+    t.decimal "listbuilding_fundraising_proba", precision: 9, scale: 6
+    t.index ["advertiser"], name: "index_fbpac_ads_on_advertiser"
+    t.index ["entities"], name: "index_fbpac_ads_on_entities", using: :gin
+    t.index ["lang"], name: "index_fbpac_ads_on_browser_lang"
+    t.index ["lower_page"], name: "fbpac_ads_lower_page_idx"
+    t.index ["page"], name: "index_fbpac_ads_on_page"
+    t.index ["political_probability"], name: "index_fbpac_ads_on_political_probability"
+    t.index ["targets"], name: "index_fbpac_ads_on_targets", using: :gin
+  end
+
   create_table "impressions", id: false, force: :cascade do |t|
     t.bigint "ad_archive_id"
     t.date "crawl_date"

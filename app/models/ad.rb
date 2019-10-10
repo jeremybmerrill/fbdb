@@ -1,4 +1,5 @@
 class Ad < ApplicationRecord
+	self.primary_key = 'archive_id'
 	has_one :collector_ad, primary_key: :archive_id
 	belongs_to :payer, foreign_key: :name, primary_key: :funding_entity
 	belongs_to :page, primary_key: :page_id
@@ -8,6 +9,8 @@ class Ad < ApplicationRecord
 	has_many :ad_topics, primary_key: :archive_id, foreign_key: :archive_id
 	has_many :topics, through: :ad_topics
 	has_one  :writable_ad, primary_key: :archive_id, foreign_key: :archive_id # just a proxy
+
+	has_one :fbpac_ad, primary_key: :ad_id, foreign_key: :id
 
 	def min_spend
 		impressions.first.min_spend
