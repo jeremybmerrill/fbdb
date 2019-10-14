@@ -23,7 +23,8 @@ class PagesController < ApplicationController
 		# breakdown of topics for all ads.
 		@topics = @page.topic_breakdown
 
-		# TODO: count of ads with a CollectorAd
+		# count of ads with a CollectorAd
+		@fbpac_ads_cnt = @page.ads.joins(:fbpac_ad).count
 		# TODO: targetings used
 
 		# TODO: domain names linked to in ads (TODO: has to come from FBPAC or AdLibrary collector)
@@ -37,13 +38,13 @@ class PagesController < ApplicationController
 		    notes: @page.writable_page&.notes,
 
 		    ads: @count_ads,
+		    fbpac_ads: @fbpac_ads_cnt,
 		    payers: @payers,
 
 		    min_impressions: @min_impressions,
 		    min_spend: @min_spend,
 		    precise_spend: @precise_spend,
 		    topics: @topics
-
 		  } }
 		end
 

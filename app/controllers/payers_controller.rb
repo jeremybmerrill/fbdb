@@ -18,6 +18,8 @@ class PayersController < ApplicationController
 		@topics = @payer.topic_breakdown
 
 		# TODO: count of ads with a CollectorAd
+		@fbpac_ads_cnt = @payer.ads.joins(:fbpac_ad).count
+
 		# TODO: targetings used
 
 		# TODO: domain names linked to in ads (TODO: has to come from FBPAC or AdLibrary collector)
@@ -29,6 +31,7 @@ class PayersController < ApplicationController
 		    notes: @payer.notes,
 
 		    ads: @count_ads,
+		    fbpac_ads: @fbpac_ads_cnt,
 		    advertisers: @advertisers,
 
 		    min_impressions: @min_impressions,
@@ -48,4 +51,17 @@ class PayersController < ApplicationController
 			format.json { render json: @all }
 		end
 	end
+
+	def index
+		# lists all known payers
+		@payers = Payer.paginate(page: params[:page], per_page: 30)
+
+
+		respond_to do |format|
+			format.html 
+			format.json { render json: @payers }
+		end
+	end
+
+
 end

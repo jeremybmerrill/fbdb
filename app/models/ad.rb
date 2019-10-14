@@ -32,6 +32,8 @@ class Ad < ApplicationRecord
 	# 	writable_ad.topic_writable_ads
 	# end	
 
+	# TODO: Exclude snapshot_url, is_active from JSON responses
+
 end
 
 
