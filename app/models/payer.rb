@@ -1,17 +1,22 @@
 class Payer < ApplicationRecord
 	has_many :ads, primary_key: :name, foreign_key: :funding_entity
 
+	has_many :ad_archive_report_pages, primary_key: :name, foreign_key: :disclaimer
+
 	def min_spend
 		ads.joins(:impressions).group(:archive_id).sum(:min_spend).values.reduce(&:+)
+	end
+	def min_spend
+		ads.joins(:impressions).group(:archive_id).sum(:max_spend).values.reduce(&:+)
 	end
 
 	def advertisers
 		Page.where(page_id: ads.unscope(:order).select("distinct page_id"))
 	end
 
-	def advertiser_spend 
-		advertisers.map(&:spend).reduce(&:+)
-	end
+	# def advertiser_spend 
+	# 	advertisers.map(&:spend).reduce(&:+)
+	# end
 
 	def min_impressions
 		#ads.joins(:impressions).group(:ad_archive_id).max(:crawl_date).sum(:min_impressions)

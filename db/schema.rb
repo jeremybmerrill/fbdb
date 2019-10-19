@@ -10,10 +10,30 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_10_08_172936) do
+ActiveRecord::Schema.define(version: 2019_10_17_013045) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "ad_archive_report_pages", force: :cascade do |t|
+    t.bigint "page_id"
+    t.string "page_name"
+    t.string "disclaimer"
+    t.integer "amount_spent"
+    t.integer "ads_count"
+    t.integer "ad_archive_report_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "ad_archive_reports", force: :cascade do |t|
+    t.datetime "scrape_date"
+    t.text "s3_url"
+    t.text "kind"
+    t.boolean "loaded", default: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
 
   create_table "ad_topics", force: :cascade do |t|
     t.bigint "archive_id"

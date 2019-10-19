@@ -18,7 +18,10 @@ class PagesController < ApplicationController
 
 		# sum of spend for all payers
 		@min_spend = @page.min_spend
-		@precise_spend = "TK"
+		@max_spend = @page.max_spend
+		aarps = @page.ad_archive_report_pages.where(ad_archive_report: AdArchiveReport.order(:scrape_date).last)
+		@precise_spend = aarps.sum(:amount_spent)
+		@report_count_ads = aarps.sum(:ads_count)
 
 		# breakdown of topics for all ads.
 		@topics = @page.topic_breakdown
@@ -43,6 +46,7 @@ class PagesController < ApplicationController
 
 		    min_impressions: @min_impressions,
 		    min_spend: @min_spend,
+		    max_spend: @max_spend,
 		    precise_spend: @precise_spend,
 		    topics: @topics
 		  } }

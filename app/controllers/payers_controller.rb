@@ -9,10 +9,15 @@ class PayersController < ApplicationController
 		# sum of min impressions for all ads
 		@min_impressions = @payer.min_impressions
 
-		# count of distinct advertisers
+		# distinct advertisers (i.e. pages)
 		@advertisers = @payer.advertisers
+
 		# sum of spend for all advertisers
 		@min_spend = @payer.min_spend
+
+		aarps = @payer.ad_archive_report_pages.where(ad_archive_report: AdArchiveReport.order(:scrape_date).last)
+		@precise_spend = aarps.sum(:amount_spent)
+		@report_count_ads = aarps.sum(:ads_count)
 
 		# breakdown of topics for all ads.
 		@topics = @payer.topic_breakdown
@@ -36,6 +41,7 @@ class PayersController < ApplicationController
 
 		    min_impressions: @min_impressions,
 		    min_spend: @min_spend,
+		    precise_spend: @precise_spend,
 		    topics: @topics
 
 		  } }

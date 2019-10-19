@@ -1,17 +1,18 @@
 class Page < ApplicationRecord
+	self.primary_key = :page_id
 	has_many :ads, primary_key: :page_id
 	has_one  :writable_page, primary_key: :page_id, foreign_key: :page_id # just a proxy
-
+	has_many :ad_archive_report_pages, primary_key: :page_id, foreign_key: :page_id
 	def min_spend
 		ads.joins(:impressions).group(:archive_id).sum(:min_spend).values.reduce(&:+)
+	end
+	def max_spend
+		ads.joins(:impressions).group(:archive_id).sum(:max_spend).values.reduce(&:+)
 	end
 
 	def payers
 		Payer.where(name: ads.unscope(:order).select("distinct funding_entity"))
 	end
-
-	# TODO advertiser spend: is this in the DB or do we have to get the Ad Archive Report?
-
 
 	def min_impressions
 		#ads.joins(:impressions).group(:ad_archive_id).max(:crawl_date).sum(:min_impressions)
@@ -41,5 +42,9 @@ class Page < ApplicationRecord
 		writable_page&.notes
 	end
 
+
+	def to_s
+		"#<Page id=#{page_id} name=#{page_name}>"
+	end
 
 end
