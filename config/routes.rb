@@ -8,6 +8,7 @@ Rails.application.routes.draw do
   get "pages/:id", to: "pages#show"
 
   get "ads", to: "ads#index"
+  get "ads/search/", to: "ads#search"
   get "ads/:archive_id", to: "ads#show"
   get "ads_by_ad_id/:ad_id", to: "ads#show"
   get "ads_by_archive_ad/:archive_id", to: "ads#show"

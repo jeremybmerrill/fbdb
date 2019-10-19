@@ -1,3 +1,6 @@
+require 'elasticsearch/dsl'
+
+
 class AdsController < ApplicationController
 
 	def show
@@ -29,4 +32,30 @@ class AdsController < ApplicationController
 		end
 	end
 
+	def search
+		# keywordsearch: ad text
+		# keywordsearch URL?
+		# some sort of search UTM params
+		# keywordsearch: targeting 
+		# filter: disclaimer, advertiser
+		# keywordsearch disclaimers?
+		# time based filter
+		search = params[:search]
+
+		query = Elasticsearch::DSL::Search.search do
+		  query do
+		  	multi_match do 
+		      query search if search
+		      fields [:text, :payer_name, :page_name]
+		  	end
+		    # TODO: targeting, if we end up getting it.
+		    # TODO: filter by  states seen, impressions minimums/maximums, topics
+		  end
+		end
+		@ads = Ad.search query
+		respond_to do |format|
+			format.html 
+			format.json { render json: @ads.as_json(include: :fbpac_ad) }
+		end
+	end
 end
