@@ -115,6 +115,8 @@ GEM
       domain_name (~> 0.5)
     i18n (1.6.0)
       concurrent-ruby (~> 1.0)
+    jar_wrapper (0.1.8)
+      zip
     jbuilder (2.9.1)
       activesupport (>= 4.2.0)
     listen (3.1.5)
@@ -198,6 +200,8 @@ GEM
       sprockets (> 3.0)
       sprockets-rails
       tilt
+    selenium (0.2.11)
+      jar_wrapper
     selenium-webdriver (3.142.5)
       childprocess (>= 0.5, < 3.0)
       rubyzip (>= 1.2.2)
@@ -244,6 +248,7 @@ GEM
     xpath (3.2.0)
       nokogiri (~> 1.8)
     zeitwerk (2.1.10)
+    zip (2.0.2)
 
 PLATFORMS
   ruby
@@ -263,6 +268,7 @@ DEPENDENCIES
   rest-client
   ruby-progressbar
   sassc-rails
+  selenium
   selenium-webdriver
   spring
   spring-watcher-listen (~> 2.0.0)

@@ -13,7 +13,8 @@ gem 'elasticsearch-dsl', github: 'elastic/elasticsearch-ruby', branch: '6.x'
 
 gem "rest-client"
 gem "ruby-progressbar"
-
+gem "selenium"
+gem "webdrivers"
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 6.0.0'
