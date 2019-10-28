@@ -9,7 +9,8 @@
 		<h3><%= big_spender.is_new ? "🚨NEW!" : '' %><%= big_spender.ad_archive_report_page.page_name %></h3>
 		<h4>Paid for by <%= big_spender.ad_archive_report_page.disclaimer %></h4>
 		<p>Spent $<%= big_spender.spend_amount.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %> in <%= big_spender.duration_days %> days</p>
-		<textarea placeholder=""><%= big_spender.writable_page&.notes %></textarea>
+
+		<%= text_area_tag :body, nil, cols: 60, rows: 12, class: "onkeyupdelay", data: {page_id: big_spender.page_id} %>
 	</div>
 
 <% end %>

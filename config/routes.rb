@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  get 'writable_pages/update'
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
 
   get "payers", to: "payers#index"
@@ -6,6 +7,8 @@ Rails.application.routes.draw do
 
   get "pages", to: "pages#index"
   get "pages/:id", to: "pages#show"
+
+  put "writable_pages/:page_id", to: 'writable_pages#update'
 
   get "ads", to: "ads#index"
   get "ads/search/", to: "ads#search"

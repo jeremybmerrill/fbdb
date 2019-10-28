@@ -15,3 +15,35 @@ require("channels")
 //
 // const images = require.context('../images', true)
 // const imagePath = (name) => images(name, true)
+
+
+document.addEventListener("turbolinks:load", function() {
+    let timeouts = {}
+
+    var token = document.getElementsByName('csrf-token')[0].content
+
+    async function submitUpdatedWritablePage(txt, page_id){
+        console.log("txt", txt, "page_id", page_id);
+        const response = await fetch(`/writable_pages/${page_id}.json`, {
+            method: 'PUT', // or 'PUT'
+            body: JSON.stringify({notes: txt}),
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': token
+            }
+          });
+        const myJson = await response.json();
+
+    }
+
+    document.addEventListener('keyup', function (event) {
+        // If the clicked element doesn't have the right selector, bail
+        if (!event.target.matches('.onkeyupdelay')) return;
+        console.log(event.target.dataset.pageId)
+        if (timeouts[event.target.dataset.pageId]){
+            clearTimeout(timeouts[event.target.dataset.pageId])
+        }
+        timeouts[event.target.dataset.pageId] = setTimeout(() => submitUpdatedWritablePage(event.target.value, event.target.dataset.pageId), 3000);
+
+    }, false);
+});
