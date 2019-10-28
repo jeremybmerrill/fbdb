@@ -27,7 +27,7 @@ namespace :ad_archive_report do
         require 'webdrivers'
         options = Selenium::WebDriver::Chrome::Options.new
         options.add_argument('--headless')
-        download_path = "/tmp/adarchive/"
+        download_path = "/Users/jmerrill/code/fbadlibrary/"
         options.add_preference(:download,
                           directory_upgrade: true,
                           prompt_for_download: false,
@@ -50,6 +50,8 @@ namespace :ad_archive_report do
         download_button = driver.find_element(css: 'div[data-testid="download_button"]')
         download_button.click
 
+        sleep 10 # time to *actually* download it.
+
         filename = Dir[download_path + "FacebookAdLibraryReport_*_US_lifelong.zip"].sort_by{|f| File.mtime(f)}.last
         date = Date.parse(File.basename(filename).split("_")[1])
         report = AdArchiveReport.create(scrape_date: date, s3_url: filename, kind: "lifelong")
@@ -62,7 +64,7 @@ namespace :ad_archive_report do
         require 'webdrivers'
         options = Selenium::WebDriver::Chrome::Options.new
         options.add_argument('--headless')
-        download_path = "/tmp/adarchive/"
+        download_path = "/Users/jmerrill/code/fbadlibrary/"
         options.add_preference(:download,
                           directory_upgrade: true,
                           prompt_for_download: false,
@@ -82,13 +84,31 @@ namespace :ad_archive_report do
         download_button = driver.find_element(css: 'div[data-testid="download_button"]')
         download_button.click
 
-        sleep 10
+        sleep 10 # time to *actually* download it.
 
         filename = Dir[download_path + "FacebookAdLibraryReport_*_US_yesterday.zip"].sort_by{|f| File.mtime(f)}.last
         date = Date.parse(File.basename(filename).split("_")[1])
         report = AdArchiveReport.create(scrape_date: date, s3_url: filename, kind: "yesterday")
 
         # TODO: should have a unique index on the kind and scrapedate
+    end
+
+    REPORT_TYPES = ["lifelong", "yesterday", "last_30_days", "last_7_days", "last_90_days"]
+    task manually_add_report: :environment do 
+        filenames = [
+                    # "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-09-02_US_yesterday/FacebookAdLibraryReport_2019-09-02_US_yesterday_advertisers.csv",
+                    # "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-09-02_US_lifelong/FacebookAdLibraryReport_2019-09-02_US_lifelong_advertisers.csv",
+                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-13_US_lifelong/FacebookAdLibraryReport_2019-10-13_US_lifelong_advertisers.csv",
+                    # "/Users/jmerrill/code/fbadlibrary/United States_FacebookAdLibraryReport_2019-10-15_US_lifelong/FacebookAdLibraryReport_2019-10-15_US_lifelong_advertisers.csv",
+                    # "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-17_US_lifelong/FacebookAdLibraryReport_2019-10-17_US_lifelong_advertisers.csv",
+                    # "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-19_US_yesterday/FacebookAdLibraryReport_2019-10-19_US_yesterday_advertisers.csv",
+                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-20_US_lifelong/FacebookAdLibraryReport_2019-10-20_US_lifelong_advertisers.csv",
+                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-20_US_yesterday/FacebookAdLibraryReport_2019-10-20_US_yesterday_advertisers.csv",
+                ]
+        filenames.each do |filename|
+            date = Date.parse(File.basename(filename).split("_")[-4])
+            report = AdArchiveReport.find_or_create_by(scrape_date: date, s3_url: filename, kind: REPORT_TYPES.find{|n| File.basename(filename).include?(n)})
+        end
     end
 
     task load: :environment do 
@@ -98,46 +118,81 @@ namespace :ad_archive_report do
         # FacebookAdLibraryReport_2019-10-19_US_yesterday.zip
 
         AdArchiveReport.where(loaded: false).each do |report|
-            # TODO: download to TMP from S3
-            # TODO: unzip
-
             puts "loading #{report.scrape_date} report"
 
             # previous ad archive report
-            previous_report = AdArchiveReport.where(loaded: true).where("scrape_date < '#{report.scrape_date.to_date.to_s}'").order(:scrape_date).last
+            # previous_report = AdArchiveReport.where(loaded: true).where("scrape_date < '#{report.scrape_date.to_date.to_s}'").order(:scrape_date).last
 
-            filename = "/Users/jmerrill/downloads/FacebookAdLibraryReport_2019-10-17_US_lifelong/FacebookAdLibraryReport_2019-10-17_US_lifelong_advertisers.csv"
             headers = nil
-            line_count = File.foreach(filename).inject(0) {|c, line| c+1 }
+            line_count = CSV.open(report.filename, headers: true, liberal_parsing: true){|csv| csv.to_a.size }
             progressbar = ProgressBar.create(:starting_at => 20, :total => line_count)
+            puts line_count
 
-            open(filename, headers: true, quote_char: nil).each_with_index.with_progressbar(:total => line_count) do |line, i|
-                # progressbar.increment
-                if i == 0
-                    headers = line.chomp.split(",")
-                    next
-                end
-                begin
-                    row = CSV.parse_line(line.chomp, headers: headers)
-                rescue CSV::MalformedCSVError
-                    row = CSV.parse_line(line.chomp, headers: headers, quote_char: nil)
-                end
-                previous_aarp = AdArchiveReportPage.find_by(page_id: row[row.headers[0]].to_i, ad_archive_report_id: previous_report.id)
-                aarp = AdArchiveReportPage.new({
-                    page_name: row["Page Name"],
-                    disclaimer: row["Disclaimer"],
-                    amount_spent: row["Amount Spent (USD)"].to_i,
-                    ads_count: row["Number of Ads in Library"].to_i,
-                    ads_this_tranche: previous_aarp ? (row["Number of Ads in Library"].to_i - previous_aarp.ads_count) : 0,
-                    spend_this_tranche: previous_aarp ? (row["Amount Spent (USD)"].to_i - previous_aarp.amount_spent) : 0,
+            CSV.open(report.filename, headers: true, liberal_parsing: true).each_with_index do |row, i|
+                progressbar.increment
+                # if i == 0
+                #     headers = line.chomp.split(",")
+                #     next
+                # end
+                # begin
+                #     row = CSV.parse_line(line.chomp, headers: headers)
+                # rescue CSV::MalformedCSVError
+                #     row = CSV.parse_line(line.chomp, headers: headers, quote_char: nil)
+                # end
+                # previous_aarp = AdArchiveReportPage.find_by(page_id: row[row.headers[0]].to_i, ad_archive_report_id: previous_report&.id)
+                aarp = AdArchiveReportPage.find_or_initialize_by({
+                    ad_archive_report_id: report.id,
+                    page_id: row[row.headers[0]].to_i
                 })
-                aarp.ad_archive_report = report
-                aarp.page = Page.find_by(page_id: row[row.headers[0]].to_i)
-                aarp.save!
+                aarp.page_name =  row["Page Name"]
+
+                aarp.disclaimer =  row["Disclaimer"]
+                aarp.amount_spent =  row["Amount Spent (USD)"].to_i
+                aarp.ads_count =  row["Number of Ads in Library"].to_i
+                    # ads_this_tranche: previous_aarp ? (row["Number of Ads in Library"].to_i - previous_aarp.ads_count) : 0,
+                    # spend_this_tranche: previous_aarp ? (row["Amount Spent (USD)"].to_i - previous_aarp.amount_spent) : 0,
+                aarp.save
             end
             report.loaded = true
             report.save
         end
     end
 
+    MINIMUM_NEW_ADVERTISER_ALERT_AMOUNT = 1000
+    MINIMUM_EXISTING_ADVERTISER_ALERT_AMOUNT = 10000
+
+    task compute_new: :environment do 
+        BigSpender.delete_all
+        current_report = AdArchiveReport.where(kind: "lifelong").last
+        previous_report = AdArchiveReport.about_a_week_ago
+
+        puts "comparing #{current_report.scrape_date} to #{previous_report.scrape_date}"
+
+        days_diff = (current_report.scrape_date.to_date - previous_report.scrape_date.to_date).to_i
+
+        previous_report_page_ids = Set.new(previous_report.ad_archive_report_pages.select(:page_id).map(&:page_id))
+
+        current_report.ad_archive_report_pages.each do |aarp|
+            is_new = !previous_report_page_ids.include?(aarp.page_id)
+            if is_new
+                amount_spent = aarp.amount_spent
+            else
+                prev_aarp = AdArchiveReportPage.find_by(ad_archive_report_id: previous_report.id, page_id: aarp.page_id)
+                amount_spent = aarp.amount_spent - prev_aarp.amount_spent
+            end
+
+            if (is_new && amount_spent > MINIMUM_NEW_ADVERTISER_ALERT_AMOUNT) || (!is_new && amount_spent > MINIMUM_EXISTING_ADVERTISER_ALERT_AMOUNT)
+                biggie = BigSpender.create!(
+                    ad_archive_report_id: current_report.id, 
+                    previous_ad_archive_report_id: previous_report.id,
+                    ad_archive_report_page_id: aarp.id,
+                    page_id: aarp.page_id,
+                    spend_amount: amount_spent,
+                    duration_days: days_diff,
+                    is_new: is_new
+                ) 
+                puts biggie
+            end
+        end
+    end
 end

@@ -51,7 +51,14 @@ class PagesController < ApplicationController
 		    topics: @topics
 		  } }
 		end
+	end
 
+	def new_since_about_a_week_ago
+		@big_spenders = BigSpender.preload(:writable_page).preload(:ad_archive_report_page).preload(:page)
+		respond_to do |format|
+		  format.html
+		  format.json { render json: @big_spenders }
+		end
 	end
 
 	def index

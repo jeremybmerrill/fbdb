@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_10_20_005347) do
+ActiveRecord::Schema.define(version: 2019_10_28_150654) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -26,6 +26,7 @@ ActiveRecord::Schema.define(version: 2019_10_20_005347) do
     t.datetime "updated_at", precision: 6, null: false
     t.integer "ads_this_tranche"
     t.integer "spend_this_tranche"
+    t.index ["ad_archive_report_id", "page_id"], name: "index_ad_archive_report_pages_on_ad_archive_report_id_page_id"
   end
 
   create_table "ad_archive_reports", force: :cascade do |t|
@@ -66,6 +67,18 @@ ActiveRecord::Schema.define(version: 2019_10_20_005347) do
     t.boolean "most_recent"
     t.string "funding_entity"
     t.index ["archive_id"], name: "unique_ad_archive_id", unique: true
+  end
+
+  create_table "big_spenders", force: :cascade do |t|
+    t.integer "ad_archive_report_id"
+    t.integer "previous_ad_archive_report_id"
+    t.integer "ad_archive_report_page_id"
+    t.bigint "page_id"
+    t.integer "spend_amount"
+    t.integer "duration_days"
+    t.boolean "is_new"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "demo_groups", id: :serial, force: :cascade do |t|
