@@ -96,12 +96,12 @@ namespace :ad_archive_report do
     REPORT_TYPES = ["lifelong", "yesterday", "last_30_days", "last_7_days", "last_90_days"]
     task manually_add_report: :environment do 
         filenames = [
-                    # "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-09-02_US_yesterday/FacebookAdLibraryReport_2019-09-02_US_yesterday_advertisers.csv",
-                    # "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-09-02_US_lifelong/FacebookAdLibraryReport_2019-09-02_US_lifelong_advertisers.csv",
+                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-09-02_US_yesterday/FacebookAdLibraryReport_2019-09-02_US_yesterday_advertisers.csv",
+                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-09-02_US_lifelong/FacebookAdLibraryReport_2019-09-02_US_lifelong_advertisers.csv",
                     "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-13_US_lifelong/FacebookAdLibraryReport_2019-10-13_US_lifelong_advertisers.csv",
-                    # "/Users/jmerrill/code/fbadlibrary/United States_FacebookAdLibraryReport_2019-10-15_US_lifelong/FacebookAdLibraryReport_2019-10-15_US_lifelong_advertisers.csv",
-                    # "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-17_US_lifelong/FacebookAdLibraryReport_2019-10-17_US_lifelong_advertisers.csv",
-                    # "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-19_US_yesterday/FacebookAdLibraryReport_2019-10-19_US_yesterday_advertisers.csv",
+                    "/Users/jmerrill/code/fbadlibrary/United States_FacebookAdLibraryReport_2019-10-15_US_lifelong/FacebookAdLibraryReport_2019-10-15_US_lifelong_advertisers.csv",
+                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-17_US_lifelong/FacebookAdLibraryReport_2019-10-17_US_lifelong_advertisers.csv",
+                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-19_US_yesterday/FacebookAdLibraryReport_2019-10-19_US_yesterday_advertisers.csv",
                     "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-20_US_lifelong/FacebookAdLibraryReport_2019-10-20_US_lifelong_advertisers.csv",
                     "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-20_US_yesterday/FacebookAdLibraryReport_2019-10-20_US_yesterday_advertisers.csv",
                 ]
@@ -119,10 +119,6 @@ namespace :ad_archive_report do
 
         AdArchiveReport.where(loaded: false).each do |report|
             puts "loading #{report.scrape_date} report"
-
-            # previous ad archive report
-            # previous_report = AdArchiveReport.where(loaded: true).where("scrape_date < '#{report.scrape_date.to_date.to_s}'").order(:scrape_date).last
-
             headers = nil
             line_count = CSV.open(report.filename, headers: true, liberal_parsing: true){|csv| csv.to_a.size }
             progressbar = ProgressBar.create(:starting_at => 20, :total => line_count)
@@ -130,16 +126,6 @@ namespace :ad_archive_report do
 
             CSV.open(report.filename, headers: true, liberal_parsing: true).each_with_index do |row, i|
                 progressbar.increment
-                # if i == 0
-                #     headers = line.chomp.split(",")
-                #     next
-                # end
-                # begin
-                #     row = CSV.parse_line(line.chomp, headers: headers)
-                # rescue CSV::MalformedCSVError
-                #     row = CSV.parse_line(line.chomp, headers: headers, quote_char: nil)
-                # end
-                # previous_aarp = AdArchiveReportPage.find_by(page_id: row[row.headers[0]].to_i, ad_archive_report_id: previous_report&.id)
                 aarp = AdArchiveReportPage.find_or_initialize_by({
                     ad_archive_report_id: report.id,
                     page_id: row[row.headers[0]].to_i
@@ -149,8 +135,6 @@ namespace :ad_archive_report do
                 aarp.disclaimer =  row["Disclaimer"]
                 aarp.amount_spent =  row["Amount Spent (USD)"].to_i
                 aarp.ads_count =  row["Number of Ads in Library"].to_i
-                    # ads_this_tranche: previous_aarp ? (row["Number of Ads in Library"].to_i - previous_aarp.ads_count) : 0,
-                    # spend_this_tranche: previous_aarp ? (row["Amount Spent (USD)"].to_i - previous_aarp.amount_spent) : 0,
                 aarp.save
             end
             report.loaded = true
