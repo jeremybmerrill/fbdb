@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
+  devise_for :users
   get 'writable_pages/update'
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
+
+ root to: "ads#overview"
 
   get "payers", to: "payers#index"
   get "payers/:id", to: "payers#show"

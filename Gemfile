@@ -15,6 +15,7 @@ gem "rest-client"
 gem "ruby-progressbar"
 gem "selenium"
 gem "webdrivers"
+gem 'devise'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 6.0.0'
