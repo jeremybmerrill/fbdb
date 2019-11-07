@@ -1,0 +1,24 @@
+<h1>Quartz Political Facebook Ads Dashboard</h1>
+
+
+<p>We have <strong><%= @ads_count.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></strong> ads and <strong><%= @fbpac_ads_count.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></strong> from FBPAC.</p>
+
+<div id="top-pages-panel">
+
+	<div>
+		<h3>Top Advertisers</h3>
+		<ol>
+			<% @top_advertisers.each do |page| %>
+				<li><%= page.page_name %>: $<%= page.amount_spent.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %> </li>
+			<% end %>
+		</ol>
+	</div>
+	<div>
+		<h3>Top Payers</h3>
+		<ol>
+			<% @top_disclaimers.each do |disc, sum| %>
+				<li><%= disc %>: $<%= sum.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></li>
+			<% end %>
+		</ol>
+	</div>
+</div>

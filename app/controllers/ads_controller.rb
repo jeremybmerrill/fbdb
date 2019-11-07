@@ -22,6 +22,17 @@ class AdsController < ApplicationController
         end
     end
 
+    def overview
+        @ads_count       = Ad.count
+        @fbpac_ads_count = FbpacAd.count
+        
+        @top_advertisers = AdArchiveReportPage.order("amount_spent desc").first(20)
+        @top_disclaimers = AdArchiveReportPage.unscope(:order).order("sum_amount_spent desc").group("disclaimer").sum(:amount_spent).first(20)
+        respond_to do |format|
+            format.html 
+        end
+    end
+
     def index
         # eventually the search method?
         @ads = Ad.includes(:fbpac_ad).paginate(page: params[:page], per_page: 30)
