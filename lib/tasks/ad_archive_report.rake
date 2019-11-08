@@ -27,7 +27,8 @@ namespace :ad_archive_report do
         require 'webdrivers'
         options = Selenium::WebDriver::Chrome::Options.new
         options.add_argument('--headless')
-        download_path = "/Users/jmerrill/code/fbadlibrary/"
+        download_path = Rails.env.production? ? "/home/ubuntu/fbadlibrary/" : "/Users/jmerrill/code/fbadlibrary/"
+        FileUtils.mkdir_p(download_path)
         options.add_preference(:download,
                           directory_upgrade: true,
                           prompt_for_download: false,
@@ -64,7 +65,8 @@ namespace :ad_archive_report do
         require 'webdrivers'
         options = Selenium::WebDriver::Chrome::Options.new
         options.add_argument('--headless')
-        download_path = "/Users/jmerrill/code/fbadlibrary/"
+        download_path = Rails.env.production? ? "/home/ubuntu/fbadlibrary/" : "/Users/jmerrill/code/fbadlibrary/"
+        FileUtils.mkdir_p(download_path)
         options.add_preference(:download,
                           directory_upgrade: true,
                           prompt_for_download: false,
@@ -111,6 +113,19 @@ namespace :ad_archive_report do
         end
     end
 
+    task add_reports: :environment do 
+        download_path = Rails.env.production? ? "/home/ubuntu/fbadlibrary/" : "/Users/jmerrill/code/fbadlibrary/"
+        filenames = Dir[download_path + "*FacebookAdLibraryReport_*.zip"]
+        filenames.each do |filename|
+            dest = filename.gsub(".zip", '')
+            `unzip -n -d "#{dest}" "#{filename}"`
+            puts File.join(dest, "FacebookAdLibraryReport*advertisers.csv")
+            filename = Dir[File.join(dest, "FacebookAdLibraryReport*advertisers.csv")].first
+            date = Date.parse(File.basename(filename).split("_")[-4])
+            report = AdArchiveReport.find_or_create_by(scrape_date: date, s3_url: filename, kind: REPORT_TYPES.find{|n| File.basename(filename).include?(n)})
+        end
+    end
+
     task load: :environment do 
 
         # FacebookAdLibraryReport_2019-10-13_US_lifelong
@@ -126,13 +141,18 @@ namespace :ad_archive_report do
 
             CSV.open(report.filename, headers: true, liberal_parsing: true).each_with_index do |row, i|
                 progressbar.increment
+
+                payer = Payer.find_or_create_by(name: row["Disclaimer"])
+
+
+
                 aarp = AdArchiveReportPage.find_or_initialize_by({
                     ad_archive_report_id: report.id,
-                    page_id: row[row.headers[0]].to_i
+                    page_id: row[row.headers[0]].to_i,
+                    disclaimer: row["Disclaimer"]
                 })
                 aarp.page_name =  row["Page Name"]
-
-                aarp.disclaimer =  row["Disclaimer"]
+                aarp.disclaimer = row["Disclaimer"]
                 aarp.amount_spent =  row["Amount Spent (USD)"].to_i
                 aarp.ads_count =  row["Number of Ads in Library"].to_i
                 aarp.save
