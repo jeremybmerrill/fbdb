@@ -8,8 +8,8 @@
 	<div>
 		<h3>Top Advertisers</h3>
 		<ol>
-			<% @top_advertisers.each do |page| %>
-				<li><%= page.page_name %>: $<%= page.amount_spent.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %> </li>
+			<% @top_advertisers.each do |page_name, amount_spent| %>
+				<li><%= page_name %>: $<%= amount_spent.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %> </li>
 			<% end %>
 		</ol>
 	</div>

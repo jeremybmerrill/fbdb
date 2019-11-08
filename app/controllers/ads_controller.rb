@@ -26,8 +26,8 @@ class AdsController < ApplicationController
         @ads_count       = Ad.count
         @fbpac_ads_count = FbpacAd.count
         
-        @top_advertisers = AdArchiveReportPage.order("amount_spent desc").first(20)
-        @top_disclaimers = AdArchiveReportPage.unscope(:order).order("sum_amount_spent desc").group("disclaimer").sum(:amount_spent).first(20)
+        @top_advertisers = AdArchiveReport.where(kind: 'lifelong').order(:scrape_date).last.ad_archive_report_pages.unscope(:order).order("sum_amount_spent desc").group("page_id, page_name").sum(:amount_spent).first(20)
+        @top_disclaimers = AdArchiveReport.where(kind: 'lifelong').order(:scrape_date).last.ad_archive_report_pages.unscope(:order).order("sum_amount_spent desc").group("disclaimer").sum(:amount_spent).first(20)
         respond_to do |format|
             format.html 
         end
