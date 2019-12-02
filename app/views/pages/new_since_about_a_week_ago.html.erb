@@ -1,16 +1,15 @@
 
 <h1> Big Spenders </h1>
 
-<p>eventually, on keystroke, this will set a setInterval for a few seconds (canceled on another keystroke), so that, after a few seconds of inactivity, it syncs to the server, so you never have to hit save.</p>
+<p>pages that have spent a lot of money between <%= AdArchiveReport.find(@big_spenders.first.previous_ad_archive_report_id).scrape_date %> and <%= @big_spenders.first.ad_archive_report.scrape_date %>. </p>
 
 <% @big_spenders.each do |big_spender| %>
 
 	<div>
-		<h3><%= big_spender.is_new ? "🚨NEW!" : '' %><%= big_spender.ad_archive_report_page.page_name %></h3>
+		<h3><%= big_spender.is_new ? "🚨NEW! " : '' %><%= big_spender.ad_archive_report_page.page_name %></h3>
 		<h4>Paid for by <%= big_spender.ad_archive_report_page.disclaimer %></h4>
 		<p>Spent $<%= big_spender.spend_amount.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %> in <%= big_spender.duration_days %> days</p>
 
 		<%= text_area_tag :body, nil, cols: 60, rows: 12, class: "onkeyupdelay", data: {page_id: big_spender.page_id} %>
 	</div>
-
 <% end %>

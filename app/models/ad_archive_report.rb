@@ -4,7 +4,7 @@ class AdArchiveReport < ApplicationRecord
 
 	def self.about_a_week_ago
 		most_recent = AdArchiveReport.where(kind: "lifelong").last.scrape_date.to_date.to_s
-		AdArchiveReport.unscope(:order).where(kind: "lifelong").order("abs(7 - extract(day from '#{most_recent}' - scrape_date))").first
+		AdArchiveReport.unscope(:order).where(kind: "lifelong").where("scrape_date < ?", most_recent).order("abs(7 - extract(day from #{most_recent} - scrape_date))").first
 	end
 
 	def filename

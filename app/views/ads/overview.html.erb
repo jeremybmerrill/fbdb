@@ -1,7 +1,9 @@
 <h1>Quartz Political Facebook Ads Dashboard</h1>
 
-
 <p>We have <strong><%= @ads_count.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></strong> ads and <strong><%= @fbpac_ads_count.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></strong> from FBPAC.</p>
+
+<div>Last updated: </div>
+<div><a href="/bigspenders">Big spenders</a> from <%= AdArchiveReport.find(@big_spenders.first.previous_ad_archive_report_id).scrape_date %> and <%= @big_spenders.first.ad_archive_report.scrape_date %>.</div>
 
 <div id="top-pages-panel">
 

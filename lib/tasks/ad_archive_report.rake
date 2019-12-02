@@ -54,8 +54,8 @@ namespace :ad_archive_report do
         sleep 10 # time to *actually* download it.
 
         filename = Dir[download_path + "FacebookAdLibraryReport_*_US_lifelong.zip"].sort_by{|f| File.mtime(f)}.last
-        date = Date.parse(File.basename(filename).split("_")[1])
-        report = AdArchiveReport.create(scrape_date: date, s3_url: filename, kind: "lifelong")
+        # date = Date.parse(File.basename(filename).split("_")[1])
+        # # report = AdArchiveReport.create(scrape_date: date, s3_url: filename, kind: "lifelong")
     end
 
     task download_daily: :environment do 
@@ -89,8 +89,8 @@ namespace :ad_archive_report do
         sleep 10 # time to *actually* download it.
 
         filename = Dir[download_path + "FacebookAdLibraryReport_*_US_yesterday.zip"].sort_by{|f| File.mtime(f)}.last
-        date = Date.parse(File.basename(filename).split("_")[1])
-        report = AdArchiveReport.create(scrape_date: date, s3_url: filename, kind: "yesterday")
+        # date = Date.parse(File.basename(filename).split("_")[1])
+        # report = AdArchiveReport.create(scrape_date: date, s3_url: filename, kind: "yesterday")
 
         # TODO: should have a unique index on the kind and scrapedate
     end
@@ -119,7 +119,6 @@ namespace :ad_archive_report do
         filenames.each do |filename|
             dest = filename.gsub(".zip", '')
             `unzip -n -d "#{dest}" "#{filename}"`
-            puts File.join(dest, "FacebookAdLibraryReport*advertisers.csv")
             filename = Dir[File.join(dest, "FacebookAdLibraryReport*advertisers.csv")].first
             date = Date.parse(File.basename(filename).split("_")[-4])
             report = AdArchiveReport.find_or_create_by(scrape_date: date, s3_url: filename, kind: REPORT_TYPES.find{|n| File.basename(filename).include?(n)})
@@ -133,7 +132,7 @@ namespace :ad_archive_report do
         # FacebookAdLibraryReport_2019-10-19_US_yesterday.zip
 
         AdArchiveReport.where(loaded: false).each do |report|
-            puts "loading #{report.scrape_date} report"
+            puts "loading #{report.scrape_date} #{report.kind} report"
             headers = nil
             line_count = CSV.open(report.filename, headers: true, liberal_parsing: true){|csv| csv.to_a.size }
             progressbar = ProgressBar.create(:starting_at => 20, :total => line_count)
@@ -165,7 +164,7 @@ namespace :ad_archive_report do
     MINIMUM_NEW_ADVERTISER_ALERT_AMOUNT = 1000
     MINIMUM_EXISTING_ADVERTISER_ALERT_AMOUNT = 10000
 
-    task compute_new: :environment do 
+    task bigspenders: :environment do 
         BigSpender.delete_all
         current_report = AdArchiveReport.where(kind: "lifelong").last
         previous_report = AdArchiveReport.about_a_week_ago
@@ -174,23 +173,23 @@ namespace :ad_archive_report do
 
         days_diff = (current_report.scrape_date.to_date - previous_report.scrape_date.to_date).to_i
 
-        previous_report_page_ids = Set.new(previous_report.ad_archive_report_pages.select(:page_id).map(&:page_id))
-
-        current_report.ad_archive_report_pages.each do |aarp|
-            is_new = !previous_report_page_ids.include?(aarp.page_id)
+        previous_report_page_ids = Set.new(previous_report.ad_archive_report_pages.select(:page_id).pluck(:id))
+        # .pluck(:id)
+        current_report.ad_archive_report_pages.pluck(:page_id, :amount_spent, :id).each do |page_id, aarp_amount_spent, aarp_id|
+            is_new = !previous_report_page_ids.include?(page_id)
             if is_new
-                amount_spent = aarp.amount_spent
+                amount_spent = aarp_amount_spent
             else
-                prev_aarp = AdArchiveReportPage.find_by(ad_archive_report_id: previous_report.id, page_id: aarp.page_id)
-                amount_spent = aarp.amount_spent - prev_aarp.amount_spent
+                prev_aarp = AdArchiveReportPage.find_by(ad_archive_report_id: previous_report.id, page_id: page_id)
+                amount_spent = aarp_amount_spent - prev_aarp.amount_spent
             end
 
             if (is_new && amount_spent > MINIMUM_NEW_ADVERTISER_ALERT_AMOUNT) || (!is_new && amount_spent > MINIMUM_EXISTING_ADVERTISER_ALERT_AMOUNT)
                 biggie = BigSpender.create!(
                     ad_archive_report_id: current_report.id, 
                     previous_ad_archive_report_id: previous_report.id,
-                    ad_archive_report_page_id: aarp.id,
-                    page_id: aarp.page_id,
+                    ad_archive_report_page_id: aarp_id,
+                    page_id: page_id,
                     spend_amount: amount_spent,
                     duration_days: days_diff,
                     is_new: is_new
