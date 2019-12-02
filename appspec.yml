@@ -1,0 +1,32 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ubuntu/rails
+# for help, consult https://blog.shikisoft.com/automate-ruby-on-rails-deployments-aws-codedeploy/
+permissions:
+  - object: /home/ubuntu/rails
+    owner: ubuntu
+    group: ubuntu
+    mode: 755
+    pattern: "*"
+    type:
+      - file
+      - directory
+hooks:
+  BeforeInstall:
+    - location: deploy/pre-deploy.sh
+      timeout: 3600
+      runas: root
+  AfterInstall:
+    - location: deploy/install_dependencies.sh
+      timeout: 3600
+      runas: ubuntu
+  ApplicationStart:
+    - location: deploy/start_server.sh
+      timeout: 300
+      runas: root
+  ApplicationStop:
+    - location: deploy/stop_server.sh
+      timeout: 300
+      runas: root
