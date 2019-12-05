@@ -170,7 +170,7 @@ resource "aws_eip_association" "eip_assoc" {
 
 resource "aws_instance" "web" {
   ami                  = "${data.aws_ami.image.id}"
-  instance_type        = "t2.micro"
+  instance_type        = "t2.small"
   root_block_device {
     volume_size          = 40
   }
