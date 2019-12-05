@@ -2,6 +2,7 @@ require 'restclient'
 require 'csv'
 require 'ruby-progressbar'
 require 'date'
+require 'json'
 using ProgressBar::Refinements::Enumerator
 
 # button click
@@ -21,8 +22,6 @@ using ProgressBar::Refinements::Enumerator
 
 namespace :ad_archive_report do 
     task download_lifelong: :environment do 
-        # scrape_date:datetime s3_url:text kind:text
-        # and should put on S3 too.
         require 'selenium'
         require 'webdrivers'
         options = Selenium::WebDriver::Chrome::Options.new
@@ -174,9 +173,11 @@ namespace :ad_archive_report do
         Rake::Task['ad_archive_report:load'].execute
         Rake::Task['ad_archive_report:bigspenders'].execute
 
-        RestClient.post("https://hooks.slack.com/services/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",
-            JSON.dump({"text" => "Successfully did Facebook ad report loading for the day." }),
-            {:content_type => "application/json"})
+        RestClient.post(
+                "https://hooks.slack.com/services/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",
+                JSON.dump({"text" => "Successfully did Facebook ad report loading / bigspenders for the day." }),
+                {:content_type => "application/json"}
+            )
     end
 
     task bigspenders: :environment do 
