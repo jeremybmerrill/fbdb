@@ -22,11 +22,11 @@ document.addEventListener("turbolinks:load", function() {
 
     var token = document.getElementsByName('csrf-token')[0].content
 
-    async function submitUpdatedWritablePage(txt, page_id){
+    async function submitUpdatedWritablePage(txt, page_id, disclaimer){
         console.log("txt", txt, "page_id", page_id);
         const response = await fetch(`/writable_pages/${page_id}.json`, {
             method: 'PUT', // or 'PUT'
-            body: JSON.stringify({notes: txt}),
+            body: JSON.stringify({notes: txt, disclaimer:disclaimer }),
             headers: {
               'Content-Type': 'application/json',
               'X-CSRF-Token': token
@@ -43,7 +43,7 @@ document.addEventListener("turbolinks:load", function() {
         if (timeouts[event.target.dataset.pageId]){
             clearTimeout(timeouts[event.target.dataset.pageId])
         }
-        timeouts[event.target.dataset.pageId] = setTimeout(() => submitUpdatedWritablePage(event.target.value, event.target.dataset.pageId), 3000);
+        timeouts[event.target.dataset.pageId] = setTimeout(() => submitUpdatedWritablePage(event.target.value, event.target.dataset.pageId, event.target.dataset.disclaimer), 3000);
 
     }, false);
 });
