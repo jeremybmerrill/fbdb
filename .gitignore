@@ -35,3 +35,5 @@ test/
 /yarn-error.log
 yarn-debug.log*
 .yarn-integrity
+
+secrets.env

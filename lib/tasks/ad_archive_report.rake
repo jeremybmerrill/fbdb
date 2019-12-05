@@ -47,6 +47,7 @@ namespace :ad_archive_report do
         driver.navigate.to("https://www.facebook.com/ads/library/report/?source=archive-landing-page&country=US")
         all_dates_btn = driver.find_elements(css: 'span.label').find{|btn| btn.text == "All Dates"}
         all_dates_btn.click
+        sleep 1
 
         download_button = driver.find_element(css: 'div[data-testid="download_button"]')
         download_button.click
@@ -134,9 +135,11 @@ namespace :ad_archive_report do
         AdArchiveReport.where(loaded: false).each do |report|
             puts "loading #{report.scrape_date} #{report.kind} report"
             headers = nil
+            next unless File.exists?(report.filename)
             line_count = CSV.open(report.filename, headers: true, liberal_parsing: true){|csv| csv.to_a.size }
-            progressbar = ProgressBar.create(:starting_at => 20, :total => line_count)
+            progressbar = ProgressBar.create(:starting_at => 0, :total => line_count)
             puts line_count
+
 
             CSV.open(report.filename, headers: true, liberal_parsing: true).each_with_index do |row, i|
                 progressbar.increment
@@ -164,6 +167,18 @@ namespace :ad_archive_report do
     MINIMUM_NEW_ADVERTISER_ALERT_AMOUNT = 1000
     MINIMUM_EXISTING_ADVERTISER_ALERT_AMOUNT = 10000
 
+    task daily: :environment do 
+        Rake::Task['ad_archive_report:download_lifelong'].execute rescue nil # sometimes fails
+        Rake::Task['ad_archive_report:download_daily'].execute rescue nil # sometimes fails
+        Rake::Task['ad_archive_report:add_reports'].execute
+        Rake::Task['ad_archive_report:load'].execute
+        Rake::Task['ad_archive_report:bigspenders'].execute
+
+        RestClient.post("https://hooks.slack.com/services/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",
+            JSON.dump({"text" => "Successfully did Facebook ad report loading for the day." }),
+            {:content_type => "application/json"})
+    end
+
     task bigspenders: :environment do 
         BigSpender.delete_all
         current_report = AdArchiveReport.where(kind: "lifelong").last
@@ -173,14 +188,15 @@ namespace :ad_archive_report do
 
         days_diff = (current_report.scrape_date.to_date - previous_report.scrape_date.to_date).to_i
 
-        previous_report_page_ids = Set.new(previous_report.ad_archive_report_pages.select(:page_id).pluck(:id))
+        previous_report_page_ids = Set.new(previous_report.ad_archive_report_pages.select(:page_id, :disclaimer).pluck(:page_id, :disclaimer))
+        puts "#{previous_report_page_ids.size} from old"
         # .pluck(:id)
-        current_report.ad_archive_report_pages.pluck(:page_id, :amount_spent, :id).each do |page_id, aarp_amount_spent, aarp_id|
-            is_new = !previous_report_page_ids.include?(page_id)
+        current_report.ad_archive_report_pages.pluck(:page_id, :amount_spent, :id, :disclaimer).each do |page_id, aarp_amount_spent, aarp_id, disclaimer|
+            is_new = !previous_report_page_ids.include?([page_id, disclaimer])
             if is_new
                 amount_spent = aarp_amount_spent
             else
-                prev_aarp = AdArchiveReportPage.find_by(ad_archive_report_id: previous_report.id, page_id: page_id)
+                prev_aarp = AdArchiveReportPage.find_by(ad_archive_report_id: previous_report.id, page_id: page_id, disclaimer: disclaimer)
                 amount_spent = aarp_amount_spent - prev_aarp.amount_spent
             end
 

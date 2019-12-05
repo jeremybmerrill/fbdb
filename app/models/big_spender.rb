@@ -7,7 +7,7 @@ class BigSpender < ApplicationRecord
 
 	def to_s
 		aarp = self.ad_archive_report_page
-		"#{self.is_new? ? "NEW ADVERTISER" : ""} #{aarp.page_name} (#{aarp.disclaimer}) spent #{self.spend_amount.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse} in the last #{self.duration_days}".strip
+		"#{self.is_new? ? "NEW ADVERTISER" : ""} #{aarp.page_name} (#{aarp.disclaimer}) spent #{self.spend_amount.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse} in the last #{self.duration_days} days".strip
 	end
 
 end
