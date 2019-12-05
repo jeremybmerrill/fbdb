@@ -13,9 +13,9 @@ class Ad < ApplicationRecord
     has_one :fbpac_ad, primary_key: :ad_id, foreign_key: :id
     
     include Elasticsearch::Model
-    index_name Rails.application.class.parent_name.underscore
+    index_name Rails.application.class.module_parent_name.underscore
     document_type self.name.downcase
-    def as_indexed_json(options={})
+    def as_indexed_json(options={}) # for ElasticSearch
       self.as_json(
         include: { page: { only: :page_name },
                    payer:    { only: :name },

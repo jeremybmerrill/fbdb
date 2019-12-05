@@ -27,8 +27,27 @@ class AdsController < ApplicationController
         @ads_count       = Ad.count
         @fbpac_ads_count = FbpacAd.count
         @big_spenders = BigSpender.preload(:writable_page).preload(:ad_archive_report_page).preload(:page)
-        @top_advertisers = AdArchiveReport.where(kind: 'lifelong', loaded: true).order(:scrape_date).last.ad_archive_report_pages.unscope(:order).order("sum_amount_spent desc").group("page_id, page_name").sum(:amount_spent).first(20)
-        @top_disclaimers = AdArchiveReport.where(kind: 'lifelong', loaded: true).order(:scrape_date).last.ad_archive_report_pages.unscope(:order).order("sum_amount_spent desc").group("disclaimer").sum(:amount_spent).first(20)
+        @top_advertisers = ActiveRecord::Base.connection.exec_query('SELECT ad_archive_report_pages.page_id, 
+            ad_archive_report_pages.page_name, 
+            sum(amount_spent)  sum_amount_spent
+            FROM ad_archive_report_pages 
+            WHERE ad_archive_report_pages.ad_archive_report_id = $1
+            GROUP BY page_id, page_name 
+            ORDER BY sum_amount_spent desc limit $2', nil, 
+            [[nil, AdArchiveReport.where(kind: 'lifelong', loaded: true).order(:scrape_date).last.id], [nil, 20]]
+            ).rows
+        @top_disclaimers = ActiveRecord::Base.connection.exec_query('SELECT 
+            payers.id,
+            ad_archive_report_pages.disclaimer, 
+            sum(amount_spent)  sum_amount_spent 
+            FROM ad_archive_report_pages 
+            JOIN payers
+            ON disclaimer = name
+            WHERE ad_archive_report_pages.ad_archive_report_id = $1 
+            GROUP BY disclaimer, payers.id 
+            ORDER BY sum_amount_spent desc limit $2', nil, 
+            [[nil, AdArchiveReport.where(kind: 'lifelong', loaded: true).order(:scrape_date).last.id], [nil, 20]]
+            ).rows
         respond_to do |format|
             format.html 
         end
@@ -74,13 +93,17 @@ class AdsController < ApplicationController
                 range :creation_date do  
                   gte publish_date 
                 end if publish_date
+
+
+                # targeting is included via FBPAC. But what do we do about searching ads that don't have an ATIAd counterpart??
                 # TODO: targeting, if we end up getting it.
                 # TODO: filter by  states seen, impressions minimums/maximums, topics
+
               end if [page_id, publish_date].any?{|a| a }
             end
           end
         end
-        @ads = Ad.search query
+        @ads = Ad.search query 
         respond_to do |format|
             format.html 
             format.json { render json: @ads.as_json(include: :fbpac_ad) }

@@ -3,24 +3,26 @@
 <p>We have <strong><%= @ads_count.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></strong> ads and <strong><%= @fbpac_ads_count.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></strong> from FBPAC.</p>
 
 <div>Last updated: </div>
-<div><a href="/bigspenders">Big spenders</a> from <%= AdArchiveReport.find(@big_spenders.first.previous_ad_archive_report_id).scrape_date %> and <%= @big_spenders.first.ad_archive_report.scrape_date %>.</div>
+<div><a href="/bigspenders">Big spenders</a> from <%= AdArchiveReport.find(@big_spenders.first.previous_ad_archive_report_id)&.scrape_date %> and <%= @big_spenders.first&.ad_archive_report&.scrape_date %>.</div>
 
 <div id="top-pages-panel">
 
 	<div>
-		<h3>Top Advertisers</h3>
-		<ol>
-			<% @top_advertisers.each do |page_name, amount_spent| %>
-				<li><%= page_name %>: $<%= amount_spent.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %> </li>
+		<h3>Top Advertisers (of all time)</h3>
+		<table>
+			<thead><td width="40%">Advertiser</td><td>Spend since 5/2018</td><td></td><td></td></thead>
+			<% @top_advertisers.each do |page_id, page_name, amount_spent| %>
+				<tr><td><%= page_name %></td><td>$<%= amount_spent.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %> </td><td><a href="https://www.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=US&impression_search_field=has_impressions_lifetime&q=<%= page_name %>">FB ads</a></td><td><a href="/pages/<%= page_id %>.json">advertiser overview</a></td></tr>
 			<% end %>
-		</ol>
+		</table>
 	</div>
 	<div>
-		<h3>Top Payers</h3>
-		<ol>
-			<% @top_disclaimers.each do |disc, sum| %>
-				<li><%= disc %>: $<%= sum.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></li>
+		<h3>Top Payers (of all time)</h3>
+		<table>
+			<thead><td width="40%">Payer</td><td>Spend since 5/2018</td><td></td><td></td></thead>
+			<% @top_disclaimers.each do |payer_id, disc, sum| %>
+				<tr><td><%= disc %></td><td>$<%= sum.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></td><td><a href="https://www.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=US&impression_search_field=has_impressions_lifetime&q=#{disc}&disclaimer_texts[0]=<%= disc %>">FB ads</a></td><td><a href="/payers/<%= payer_id %>.json">payer overview</a></td></tr>
 			<% end %>
-		</ol>
+		</table>
 	</div>
 </div>
