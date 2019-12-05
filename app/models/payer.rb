@@ -36,4 +36,11 @@ class Payer < ApplicationRecord
 		breakdown_proportions
 	end
 
+	def targeting_methods
+        individual_methods = FbpacAd.connection.execute("select target, segment, count(*) as count from (select jsonb_array_elements(targets)->>'segment' as segment, jsonb_array_elements(targets)->>'target' as target from fbpac_ads WHERE #{Ad.send(:sanitize_sql_for_conditions, ["fbpac_ads.paid_for_by = ?", [name]] )}) q  group by segment, target order by count desc").to_a
+        combined_methods = FbpacAd.unscope(:order).where(paid_for_by: name).group(:targets).count.to_a.sort_by{|a, b| -b}
+        {individual_methods: individual_methods, combined_methods: combined_methods}
+    end
+
+
 end

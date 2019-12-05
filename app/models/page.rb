@@ -42,6 +42,13 @@ class Page < ApplicationRecord
 		writable_page&.notes
 	end
 
+	def targeting_methods
+        individual_methods = FbpacAd.connection.execute("select target, segment, count(*) as count from (select jsonb_array_elements(targets)->>'segment' as segment, jsonb_array_elements(targets)->>'target' as target from fbpac_ads WHERE #{Ad.send(:sanitize_sql_for_conditions, ["fbpac_ads.advertiser = ?", [page_name]] )}) q  group by segment, target order by count desc").to_a
+        combined_methods = FbpacAd.unscope(:order).where(advertiser: page_name).group(:targets).count.to_a.sort_by{|a, b| -b}
+        {individual_methods: individual_methods, combined_methods: combined_methods}
+    end
+
+
 
 	def to_s
 		"#<Page id=#{page_id} name=#{page_name}>"

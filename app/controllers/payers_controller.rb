@@ -23,11 +23,16 @@ class PayersController < ApplicationController
 		@topics = @payer.topic_breakdown
 
 		# TODO: count of ads with a CollectorAd
-		@fbpac_ads_cnt = @payer.ads.joins(:fbpac_ad).count
+		fbpac_ads = FbpacAd.where(paid_for_by: @payer.name)
+		@fbpac_ads_cnt = fbpac_ads.count
+		# TODO: targetings used
+		@targetings = @payer.targeting_methods
 
 		# TODO: targetings used
 
 		# TODO: domain names linked to in ads (TODO: has to come from FBPAC or AdLibrary collector)
+
+		# TODO: notes are appended (or longest of?) unique payer / page pairs.
 
 		respond_to do |format|
 		  format.html
@@ -42,7 +47,8 @@ class PayersController < ApplicationController
 		    min_impressions: @min_impressions,
 		    min_spend: @min_spend,
 		    precise_spend: @precise_spend,
-		    topics: @topics
+		    topics: @topics,
+		    targetings: @targetings
 
 		  } }
 		end

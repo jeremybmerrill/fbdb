@@ -27,12 +27,12 @@ class PagesController < ApplicationController
 		@topics = @page.topic_breakdown
 
 		# count of ads with a CollectorAd
-		@fbpac_ads_cnt = @page.ads.joins(:fbpac_ad).count
+		fbpac_ads = FbpacAd.where(advertiser: @page.page_name)
+		@fbpac_ads_cnt = fbpac_ads.count
 		# TODO: targetings used
+		@targetings = @page.targeting_methods
 
 		# TODO: domain names linked to in ads (TODO: has to come from FBPAC or AdLibrary collector)
-
-		# TODO: needs WritablePage for notes.
 
 		respond_to do |format|
 		  format.html
@@ -48,7 +48,9 @@ class PagesController < ApplicationController
 		    min_spend: @min_spend,
 		    max_spend: @max_spend,
 		    precise_spend: @precise_spend,
-		    topics: @topics
+		    topics: @topics,
+
+		    targetings: @targetings
 		  } }
 		end
 	end
