@@ -12,18 +12,17 @@ class AdsController < ApplicationController
 
 
         @fbpac_ad = @ad.fbpac_ad
-
+        @writable_ad = @ad.writable_ad
 
         respond_to do |format|
           format.html
           format.json { render json: {
-            ad: @ad.as_json(include: :fbpac_ad)
+            ad: @ad.as_json(include: [:fbpac_ad, :writable_ad, :topics])
           } }
         end
     end
 
     def overview
-        
         @ads_count       = Ad.count
         @fbpac_ads_count = FbpacAd.count
         @big_spenders = BigSpender.preload(:writable_page).preload(:ad_archive_report_page).preload(:page)
@@ -76,8 +75,7 @@ class AdsController < ApplicationController
         search = params[:search]
         page_id = params[:page_id]
         publish_date = nil # "2019-01-01"
-
-        puts page_id
+        topic = params[:topic]
 
         query = Elasticsearch::DSL::Search.search do
           query do
@@ -85,21 +83,22 @@ class AdsController < ApplicationController
               must do
                 multi_match do
                   query search
-                  fields [:text, :payer_name, :page_name]
-                end 
+                    fields [:text, :payer_name, :page_name]
+                end if search 
               end if search
               filter do
                 term page_id: page_id.to_i if page_id
                 range :creation_date do  
                   gte publish_date 
                 end if publish_date
+                terms topics: [topic] if topic
 
 
                 # targeting is included via FBPAC. But what do we do about searching ads that don't have an ATIAd counterpart??
                 # TODO: targeting, if we end up getting it.
                 # TODO: filter by  states seen, impressions minimums/maximums, topics
 
-              end if [page_id, publish_date].any?{|a| a }
+              end if [page_id, publish_date, topic].any?{|a| a }
             end
           end
         end

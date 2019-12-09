@@ -16,12 +16,15 @@ class Ad < ApplicationRecord
     index_name Rails.application.class.module_parent_name.underscore
     document_type self.name.downcase
     def as_indexed_json(options={}) # for ElasticSearch
-      self.as_json(
+      json = self.as_json(
         include: { page: { only: :page_name },
                    payer:    { only: :name },
-                   ad_topics:   { only: :topic },
+                   topics:   { only: :topic },
                    fbpac_ad: {only: :targetings }
                  })
+      puts json["topics"].inspect if json["topics"]
+      json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
+      json
     end
 
     def min_spend

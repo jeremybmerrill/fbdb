@@ -5,3 +5,7 @@ This is a repo for a dashboard for Facebook ads (and perhaps other online politi
 TODOs:
 - add payer_id column on AdArchiveReportPage
 - stop keeping page_name and disclaimer on AdArchiveReportPage (to save space).
+
+
+how to load in Elasticsearch:
+	rake environment elasticsearch:import:model CLASS='Ad'
