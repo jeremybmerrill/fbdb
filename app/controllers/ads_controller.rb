@@ -28,7 +28,7 @@ class AdsController < ApplicationController
         @big_spenders = BigSpender.preload(:writable_page).preload(:ad_archive_report_page).preload(:page)
         @top_advertisers = ActiveRecord::Base.connection.exec_query('SELECT ad_archive_report_pages.page_id, 
             ad_archive_report_pages.page_name, 
-            sum(amount_spent)  sum_amount_spent
+            sum(amount_spent_since_start_date)  sum_amount_spent
             FROM ad_archive_report_pages 
             WHERE ad_archive_report_pages.ad_archive_report_id = $1
             GROUP BY page_id, page_name 
@@ -38,7 +38,7 @@ class AdsController < ApplicationController
         @top_disclaimers = ActiveRecord::Base.connection.exec_query('SELECT 
             payers.id,
             ad_archive_report_pages.disclaimer, 
-            sum(amount_spent)  sum_amount_spent 
+            sum(amount_spent_since_start_date)  sum_amount_spent 
             FROM ad_archive_report_pages 
             JOIN payers
             ON disclaimer = name

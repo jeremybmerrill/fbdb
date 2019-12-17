@@ -10,18 +10,26 @@
 	<div>
 		<h3>Top Advertisers (of all time)</h3>
 		<table>
-			<thead><td width="40%">Advertiser</td><td>Spend since 5/2018</td><td></td><td></td></thead>
+			<thead style="font-weight: bold"><td width="40%">Advertiser</td><td>Spend since <%= AdArchiveReport::START_DATE %></td><td></td><td></td></thead>
 			<% @top_advertisers.each do |page_id, page_name, amount_spent| %>
-				<tr><td><%= page_name %></td><td>$<%= amount_spent.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %> </td><td><a href="https://www.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=US&impression_search_field=has_impressions_lifetime&q=<%= page_name %>">FB ads</a></td><td><a href="/pages/<%= page_id %>.json">advertiser overview</a></td></tr>
+				<tr>
+					<td><%= page_name %></td>
+					<td>$<%= amount_spent.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %> </td>
+					<td><a href="https://www.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=US&impression_search_field=has_impressions_lifetime&q=<%= page_name %>">FB ads</a></td>
+					<td><a href="/pages/<%= page_id %>.json">advertiser overview</a></td>
+				</tr>
 			<% end %>
 		</table>
 	</div>
 	<div>
 		<h3>Top Payers (of all time)</h3>
 		<table>
-			<thead><td width="40%">Payer</td><td>Spend since 5/2018</td><td></td><td></td></thead>
+			<thead style="font-weight: bold"><td width="40%">Payer</td><td>Spend since <%= AdArchiveReport::START_DATE %></td><td></td><td></td></thead>
 			<% @top_disclaimers.each do |payer_id, disc, sum| %>
-				<tr><td><%= disc %></td><td>$<%= sum.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></td><td><a href="https://www.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=US&impression_search_field=has_impressions_lifetime&q=#{disc}&disclaimer_texts[0]=<%= disc %>">FB ads</a></td><td><a href="/payers/<%= payer_id %>.json">payer overview</a></td></tr>
+				<tr><td><%= disc == disc.upcase ? disc.titleize : disc %></td>
+					<td>$<%= sum.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></td>
+				<td><a href="https://www.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=US&impression_search_field=has_impressions_lifetime&q=#{disc}&disclaimer_texts[0]=<%= disc %>">FB ads</a></td>
+				<td><a href="/payers/<%= payer_id %>.json">payer overview</a></td></tr>
 			<% end %>
 		</table>
 	</div>

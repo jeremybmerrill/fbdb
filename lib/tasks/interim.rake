@@ -2,7 +2,7 @@
 require 'csv'
 namespace :fake do 
 	task topics: :environment do
-		topics = ["immigration (fake)", "budget (fake)", "corruption (fake)", "abortion (fake)" ]
+		topics = ["immigrationfake", "budgetfake", "corruptionfake", "abortionfake" ]
 		topics.each do |topic|
 			t = Topic.find_or_create_by(topic: topic)
 		end

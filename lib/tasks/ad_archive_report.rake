@@ -26,7 +26,7 @@ namespace :ad_archive_report do
         require 'webdrivers'
         options = Selenium::WebDriver::Chrome::Options.new
         options.add_argument('--headless')
-        download_path = Rails.env.production? ? "/home/ubuntu/fbadlibrary/" : "/Users/jmerrill/code/fbadlibrary/"
+        download_path = Rails.env.production? ? "/home/ubuntu/fbadlibrary/" : "/Users/merrillj/code/fbadlibrary/"
         FileUtils.mkdir_p(download_path)
         options.add_preference(:download,
                           directory_upgrade: true,
@@ -56,6 +56,7 @@ namespace :ad_archive_report do
         filename = Dir[download_path + "FacebookAdLibraryReport_*_US_lifelong.zip"].sort_by{|f| File.mtime(f)}.last
         # date = Date.parse(File.basename(filename).split("_")[1])
         # # report = AdArchiveReport.create(scrape_date: date, s3_url: filename, kind: "lifelong")
+        driver.quit
     end
 
     task download_daily: :environment do 
@@ -65,7 +66,7 @@ namespace :ad_archive_report do
         require 'webdrivers'
         options = Selenium::WebDriver::Chrome::Options.new
         options.add_argument('--headless')
-        download_path = Rails.env.production? ? "/home/ubuntu/fbadlibrary/" : "/Users/jmerrill/code/fbadlibrary/"
+        download_path = Rails.env.production? ? "/home/ubuntu/fbadlibrary/" : "/Users/merrillj/code/fbadlibrary/"
         FileUtils.mkdir_p(download_path)
         options.add_preference(:download,
                           directory_upgrade: true,
@@ -93,19 +94,20 @@ namespace :ad_archive_report do
         # report = AdArchiveReport.create(scrape_date: date, s3_url: filename, kind: "yesterday")
 
         # TODO: should have a unique index on the kind and scrapedate
+        driver.quit
     end
 
     REPORT_TYPES = ["lifelong", "yesterday", "last_30_days", "last_7_days", "last_90_days"]
     task manually_add_report: :environment do 
         filenames = [
-                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-09-02_US_yesterday/FacebookAdLibraryReport_2019-09-02_US_yesterday_advertisers.csv",
-                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-09-02_US_lifelong/FacebookAdLibraryReport_2019-09-02_US_lifelong_advertisers.csv",
-                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-13_US_lifelong/FacebookAdLibraryReport_2019-10-13_US_lifelong_advertisers.csv",
-                    "/Users/jmerrill/code/fbadlibrary/United States_FacebookAdLibraryReport_2019-10-15_US_lifelong/FacebookAdLibraryReport_2019-10-15_US_lifelong_advertisers.csv",
-                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-17_US_lifelong/FacebookAdLibraryReport_2019-10-17_US_lifelong_advertisers.csv",
-                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-19_US_yesterday/FacebookAdLibraryReport_2019-10-19_US_yesterday_advertisers.csv",
-                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-20_US_lifelong/FacebookAdLibraryReport_2019-10-20_US_lifelong_advertisers.csv",
-                    "/Users/jmerrill/code/fbadlibrary/FacebookAdLibraryReport_2019-10-20_US_yesterday/FacebookAdLibraryReport_2019-10-20_US_yesterday_advertisers.csv",
+                    "/Users/merrillj/code/fbadlibrary/FacebookAdLibraryReport_2019-09-02_US_yesterday/FacebookAdLibraryReport_2019-09-02_US_yesterday_advertisers.csv",
+                    "/Users/merrillj/code/fbadlibrary/FacebookAdLibraryReport_2019-09-02_US_lifelong/FacebookAdLibraryReport_2019-09-02_US_lifelong_advertisers.csv",
+                    "/Users/merrillj/code/fbadlibrary/FacebookAdLibraryReport_2019-10-13_US_lifelong/FacebookAdLibraryReport_2019-10-13_US_lifelong_advertisers.csv",
+                    "/Users/merrillj/code/fbadlibrary/United States_FacebookAdLibraryReport_2019-10-15_US_lifelong/FacebookAdLibraryReport_2019-10-15_US_lifelong_advertisers.csv",
+                    "/Users/merrillj/code/fbadlibrary/FacebookAdLibraryReport_2019-10-17_US_lifelong/FacebookAdLibraryReport_2019-10-17_US_lifelong_advertisers.csv",
+                    "/Users/merrillj/code/fbadlibrary/FacebookAdLibraryReport_2019-10-19_US_yesterday/FacebookAdLibraryReport_2019-10-19_US_yesterday_advertisers.csv",
+                    "/Users/merrillj/code/fbadlibrary/FacebookAdLibraryReport_2019-10-20_US_lifelong/FacebookAdLibraryReport_2019-10-20_US_lifelong_advertisers.csv",
+                    "/Users/merrillj/code/fbadlibrary/FacebookAdLibraryReport_2019-10-20_US_yesterday/FacebookAdLibraryReport_2019-10-20_US_yesterday_advertisers.csv",
                 ]
         filenames.each do |filename|
             date = Date.parse(File.basename(filename).split("_")[-4])
@@ -114,7 +116,7 @@ namespace :ad_archive_report do
     end
 
     task add_reports: :environment do 
-        download_path = Rails.env.production? ? "/home/ubuntu/fbadlibrary/" : "/Users/jmerrill/code/fbadlibrary/"
+        download_path = Rails.env.production? ? "/home/ubuntu/fbadlibrary/" : "/Users/merrillj/code/fbadlibrary/"
         filenames = Dir[download_path + "*FacebookAdLibraryReport_*.zip"]
         filenames.each do |filename|
             dest = filename.gsub(".zip", '')
@@ -131,7 +133,10 @@ namespace :ad_archive_report do
         # FacebookAdLibraryReport_2019-10-13_US_lifelong.zip
         # FacebookAdLibraryReport_2019-10-19_US_yesterday.zip
 
-        AdArchiveReport.where(loaded: false).each do |report|
+        starting_point_aar = AdArchiveReport.starting_point
+        
+
+        AdArchiveReport.where(loaded: false).where("scrape_date > '2019-12-11'").each do |report|
             puts "loading #{report.scrape_date} #{report.kind} report"
             headers = nil
             next unless File.exists?(report.filename)
@@ -152,9 +157,15 @@ namespace :ad_archive_report do
                     page_id: row[row.headers[0]].to_i,
                     disclaimer: row["Disclaimer"]
                 })
+                starting_point_aarp = AdArchiveReportPage.find_by(
+                    ad_archive_report_id: starting_point_aar.id, 
+                    page_id: row[row.headers[0]].to_i,
+                    disclaimer: row["Disclaimer"]
+                )
                 aarp.page_name =  row["Page Name"]
                 aarp.disclaimer = row["Disclaimer"]
                 aarp.amount_spent =  row["Amount Spent (USD)"].to_i
+                aarp.amount_spent_since_start_date = row["Amount Spent (USD)"].to_i - (starting_point_aarp.nil? ? 0 : starting_point_aarp.amount_spent) if report.kind == "lifelong" && starting_point_aar.scrape_date < report.scrape_date
                 aarp.ads_count =  row["Number of Ads in Library"].to_i
                 aarp.save
             end
@@ -174,8 +185,8 @@ namespace :ad_archive_report do
         Rake::Task['ad_archive_report:bigspenders'].execute
 
         RestClient.post(
-                "https://hooks.slack.com/services/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",
-                JSON.dump({"text" => "Successfully did Facebook ad report loading / bigspenders for the day." }),
+                ENV["SLACKWH"],
+                JSON.dump({"text" => "Facebook ad report loading / bigspenders for the day went swimmingly." }),
                 {:content_type => "application/json"}
             )
     end

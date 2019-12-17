@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_03_155349) do
+ActiveRecord::Schema.define(version: 2019_12_16_225447) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -26,6 +26,7 @@ ActiveRecord::Schema.define(version: 2019_12_03_155349) do
     t.datetime "updated_at", precision: 6, null: false
     t.integer "ads_this_tranche"
     t.integer "spend_this_tranche"
+    t.integer "amount_spent_since_start_date"
     t.index ["ad_archive_report_id", "page_id"], name: "index_ad_archive_report_pages_on_ad_archive_report_id_page_id"
   end
 
