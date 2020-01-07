@@ -37,3 +37,8 @@ yarn-debug.log*
 .yarn-integrity
 
 secrets.env
+terraform.tf
+.terraform/
+deploy/
+terraform.tfstate
+terraform.tfstate.backup
