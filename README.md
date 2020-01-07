@@ -9,3 +9,4 @@ TODOs:
 
 how to load in Elasticsearch:
 	rake environment elasticsearch:import:model CLASS='Ad'
+	rake environment elasticsearch:import:model CLASS='FbpacAd'

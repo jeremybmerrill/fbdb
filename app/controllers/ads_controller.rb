@@ -62,6 +62,14 @@ class AdsController < ApplicationController
         end
     end
 
+    def no_payer
+        @fbpac_ads = FbpacAd.where(paid_for_by: nil, lang: "en-US").order("created_at desc").paginate(page: params[:page], per_page: 30)
+        respond_to do |format|
+            format.html 
+            format.json { render json: @fbpac_ads }
+        end
+    end
+
     def search
         # keywordsearch: ad text
         # keywordsearch URL?
@@ -84,7 +92,7 @@ class AdsController < ApplicationController
                 multi_match do
                   query search
                     fields [:text, :payer_name, :page_name]
-                end if search 
+                end if search
               end if search
               filter do
                 term page_id: page_id.to_i if page_id
@@ -92,6 +100,8 @@ class AdsController < ApplicationController
                   gte publish_date 
                 end if publish_date
                 terms topics: [topic] if topic
+                # script script: "_source._content.length() == 0" if params[:no_payer]
+               
 
 
                 # targeting is included via FBPAC. But what do we do about searching ads that don't have an ATIAd counterpart??

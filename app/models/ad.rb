@@ -10,7 +10,7 @@ class Ad < ApplicationRecord
     has_many :topics, through: :ad_topics
     has_one  :writable_ad, primary_key: :archive_id, foreign_key: :archive_id # just a proxy
 
-    has_one :fbpac_ad, primary_key: :ad_id, foreign_key: :id
+    has_one :fbpac_ad, primary_key: :ad_id, foreign_key: :id # doesn't work anymore,s adly
     
     include Elasticsearch::Model
     index_name Rails.application.class.module_parent_name.underscore
@@ -19,10 +19,8 @@ class Ad < ApplicationRecord
       json = self.as_json(
         include: { page: { only: :page_name },
                    payer:    { only: :name },
-                   topics:   { only: :topic },
-                   fbpac_ad: {only: :targetings }
+                   topics:   { only: :topic }
                  })
-      puts json["topics"].inspect if json["topics"]
       json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
       json
     end

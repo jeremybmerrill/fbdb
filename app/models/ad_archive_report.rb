@@ -15,7 +15,7 @@ class AdArchiveReport < ApplicationRecord
 	end
 
 	def self.starting_point
-		AdArchiveReport.unscope(:order).where(kind: "lifelong").where("scrape_date > ?", START_DATE).order("scrape_date asc").first
+		AdArchiveReport.unscope(:order).where(kind: "lifelong").where("scrape_date >= ?", START_DATE).order("scrape_date asc").first
 	end
 
 	def filename

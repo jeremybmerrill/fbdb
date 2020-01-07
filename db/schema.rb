@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_16_225447) do
+ActiveRecord::Schema.define(version: 2020_01_03_144941) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -101,7 +101,7 @@ ActiveRecord::Schema.define(version: 2019_12_16_225447) do
     t.index ["ad_archive_id"], name: "demo_impressions_archive_id_idx"
   end
 
-  create_table "fbpac_ads", id: :bigint, default: nil, force: :cascade do |t|
+  create_table "fbpac_ads", id: :text, force: :cascade do |t|
     t.text "html", null: false
     t.integer "political", null: false
     t.integer "not_political", null: false

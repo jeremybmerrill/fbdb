@@ -3,14 +3,16 @@
 <p>We have <strong><%= @ads_count.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></strong> ads and <strong><%= @fbpac_ads_count.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></strong> from FBPAC.</p>
 
 <div>Last updated: </div>
+<% if @big_spenders.size > 0 %>
 <div><a href="/bigspenders">Big spenders</a> from <%= AdArchiveReport.find(@big_spenders.first.previous_ad_archive_report_id)&.scrape_date %> and <%= @big_spenders.first&.ad_archive_report&.scrape_date %>.</div>
+<% end %>
 
 <div id="top-pages-panel">
 
 	<div>
 		<h3>Top Advertisers (of all time)</h3>
 		<table>
-			<thead style="font-weight: bold"><td width="40%">Advertiser</td><td>Spend since <%= AdArchiveReport::START_DATE %></td><td></td><td></td></thead>
+			<thead style="font-weight: bold"><td width="40%">Advertiser</td><td>Spend since <%= AdArchiveReport.starting_point.scrape_date.to_date %></td><td></td><td></td></thead>
 			<% @top_advertisers.each do |page_id, page_name, amount_spent| %>
 				<tr>
 					<td><%= page_name %></td>
