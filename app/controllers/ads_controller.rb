@@ -79,11 +79,11 @@ class AdsController < ApplicationController
         # keywordsearch disclaimers?
         # time based filter
 
-        
         search = params[:search]
         page_id = params[:page_id]
         publish_date = nil # "2019-01-01"
         topic = params[:topic]
+        no_payer = params[:no_payer]
 
         query = Elasticsearch::DSL::Search.search do
           query do
@@ -91,7 +91,10 @@ class AdsController < ApplicationController
               must do
                 multi_match do
                   query search
-                    fields [:text, :payer_name, :page_name]
+                    fields [
+                            :text, :payer_name, :page_name, # Ad
+                            :message, :advertiser, :paid_for_by # FbpacAd
+                        ]
                 end if search
               end if search
               filter do
@@ -100,22 +103,22 @@ class AdsController < ApplicationController
                   gte publish_date 
                 end if publish_date
                 terms topics: [topic] if topic
-                # script script: "_source._content.length() == 0" if params[:no_payer]
+                 
+                term paid_for_by: FbpacAd::MISSING_STR if no_payer # will ONLY return FBPAC ads
                
-
-
                 # targeting is included via FBPAC. But what do we do about searching ads that don't have an ATIAd counterpart??
                 # TODO: targeting, if we end up getting it.
                 # TODO: filter by  states seen, impressions minimums/maximums, topics
 
-              end if [page_id, publish_date, topic].any?{|a| a }
+              end if [page_id, publish_date, topic, no_payer].any?{|a| a }
             end
           end
         end
-        @ads = Ad.search query 
+        @ads = Ad.search(query)
+        @fbpac_ads = FbpacAd.search(query)
         respond_to do |format|
             format.html 
-            format.json { render json: @ads.as_json(include: :fbpac_ad) }
+            format.json { render json: @ads.as_json + @fbpac_ads.as_json  }
         end
     end
 end
