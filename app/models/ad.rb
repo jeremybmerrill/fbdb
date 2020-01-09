@@ -1,3 +1,5 @@
+
+
 class Ad < ApplicationRecord
     self.primary_key = 'archive_id'
     # has_one :collector_ad, primary_key: :archive_id # for the NEW collector, not existing FBPAC.
@@ -10,10 +12,11 @@ class Ad < ApplicationRecord
     has_many :topics, through: :ad_topics
     has_one  :writable_ad, primary_key: :archive_id, foreign_key: :archive_id # just a proxy
 
-    has_one :fbpac_ad, primary_key: :ad_id, foreign_key: :id # doesn't work anymore,s adly
+
+    has_one :fbpac_ad, primary_key: :ad_id, foreign_key: :id # doesn't work anymore, sadly
     
     include Elasticsearch::Model
-    index_name Rails.application.class.module_parent_name.underscore
+    index_name Rails.application.class.module_parent_name.underscore + "_" + self.name.downcase
     document_type self.name.downcase
     def as_indexed_json(options={}) # for ElasticSearch
       json = self.as_json(
@@ -46,13 +49,17 @@ class Ad < ApplicationRecord
     # end   
 
     # TODO: Exclude snapshot_url, is_active from JSON responses
-      def serializable_hash(options={})
-        options = { 
-            exclude: [:snapshot_url, :is_active]
-        }.update(options)
-        super(options)
-      end
+    def serializable_hash(options={})
+      options = { 
+          exclude: [:snapshot_url, :is_active]
+      }.update(options)
+      super(options)
+    end
 
+
+    def clean_text
+      text.strip.downcase.gsub(/\s/, ' ').gsub(/[^a-z 0-9]/, '')
+    end
 end
 
 

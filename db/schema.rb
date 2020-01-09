@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_01_03_144941) do
+ActiveRecord::Schema.define(version: 2020_01_08_181722) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -35,6 +35,14 @@ ActiveRecord::Schema.define(version: 2020_01_03_144941) do
     t.text "s3_url"
     t.text "kind"
     t.boolean "loaded", default: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "ad_texts", force: :cascade do |t|
+    t.text "text"
+    t.string "text_hash"
+    t.text "vec"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
@@ -101,7 +109,7 @@ ActiveRecord::Schema.define(version: 2020_01_03_144941) do
     t.index ["ad_archive_id"], name: "demo_impressions_archive_id_idx"
   end
 
-  create_table "fbpac_ads", id: :text, force: :cascade do |t|
+  create_table "fbpac_ads", id: :bigint, default: nil, force: :cascade do |t|
     t.text "html", null: false
     t.integer "political", null: false
     t.integer "not_political", null: false
@@ -206,6 +214,9 @@ ActiveRecord::Schema.define(version: 2020_01_03_144941) do
     t.bigint "archive_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "text_hash"
+    t.text "ad_id"
+    t.index ["text_hash"], name: "index_writable_ads_on_text_hash"
   end
 
   create_table "writable_pages", force: :cascade do |t|

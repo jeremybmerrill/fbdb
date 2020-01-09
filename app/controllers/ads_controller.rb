@@ -22,6 +22,36 @@ class AdsController < ApplicationController
         end
     end
 
+    # ed293d9358f9e3ed11b07433fd2e381687dac947 has both fbpac_ads and ads
+    def show_by_text
+        @fbpac_ads = FbpacAd.joins(:writable_ad).includes(:writable_ad).where({writable_ads: {text_hash: params[:text_hash]}})
+        @ads  =       Ad.joins(:writable_ad).includes(:writable_ad).includes(:impressions).where({writable_ads: {text_hash: params[:text_hash]}})
+
+        @text = @ads.first&.text || @fbpac_ads&.first&.message
+        @fbpac_ads_count = @fbpac_ads.count
+        @api_ads_count = @ads.count
+        @min_spend = @ads.joins(:impressions).sum(:min_spend)
+        @max_spend = @ads.joins(:impressions).sum(:max_spend)
+        @min_impressions = @ads.joins(:impressions).sum(:min_impressions)
+        @max_impressions = @ads.joins(:impressions).sum(:max_impressions)
+
+
+        respond_to do |format|
+          format.html
+          format.json { render json: {
+            text: @text,
+            fbpac_ads_count: @fbpac_ads_count,
+            api_ads_count: @api_ads_count,
+            min_spend: @min_spend,
+            max_spend: @max_spend,
+            min_impressions: @min_impressions,
+            max_impressions: @max_impressions,
+            ads: @ads.as_json(include: [:impressions, :writable_ad]) + @fbpac_ads.as_json(include: [:writable_ad]),
+            } 
+          }
+        end
+    end
+
     def overview
         @ads_count       = Ad.count
         @fbpac_ads_count = FbpacAd.count

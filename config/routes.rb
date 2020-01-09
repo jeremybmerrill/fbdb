@@ -19,6 +19,7 @@ Rails.application.routes.draw do
   get "ads/:archive_id", to: "ads#show"
   get "ads_by_ad_id/:ad_id", to: "ads#show"
   get "ads_by_archive_ad/:archive_id", to: "ads#show"
+  get "ads_by_text/:text_hash", to: "ads#show_by_text"
 
   get "bigspenders", to: "pages#new_since_about_a_week_ago"
 end
