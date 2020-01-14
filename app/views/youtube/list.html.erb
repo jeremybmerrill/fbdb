@@ -1,0 +1,31 @@
+<html>
+<head>
+  <title>Interim YouTube Ads Dashboard</title>
+</head>
+<body>
+  <a href="/">Home: FB dashboard</a>
+  <h1><a href="/interim/youtube/">Jeremy's Interim YouTube Ads Dashboard</a></h1>
+
+  <h2><%= @matching_ads.size %> ads <%= @query %></h2>
+  <ul>
+  <% @matching_ads.each do |ad| %>
+    <li>
+      <!-- <b>ad id:</b> <%= ad["ad"]['video_id'] %> + (video_id ? " / ad URL: <%= ad["ad"]['url'] %>" : '')<br /> -->
+      <b>ad type:</b> <%= ad["ad"]['type'] %><br />
+      <!-- <b>advertiser:</b> <%= ad["ad"]['advertiser'] %><br /> -->
+      <b><%= ad["ad"]['reasons_title'].to_s %></b><br />
+      <ul>
+        <% ad["ad"]['reasons']&.map do |l| %>
+          <li><%= l %></li>
+        <% end %>
+      </ul>
+      <b>creative:</b> <%= (ad["ad"]['creative'].respond_to?(:join) ? ad["ad"]['creative'].join(" ") : ad["ad"]['creative'] ) || ad["ad"]['dest_url'] %><br />
+      <% if ad["host"] %><b>host: </b><a href='https://www.youtube.com/watch?v=<%= ad["host"]["id"] %>'><%= ad["host"]["title"] %></a> - <%= ad["host"]["author"] %><% end %>
+    </li>
+  <% end %>
+  </ul>
+</body>
+</html>
+
+<!-- {"_id"=>"21d512ed7f22c65975ac1e0f599c25d1", "_rev"=>"1-7256597566db30b702023c304e271727", "ad"=>{"type"=>"invideoOverlayAdRenderer", "creative"=>["Enforce Immigration Law", "Sign the petition to stop the open border and enforce the law!", "judicialwatch.org"], "dest_url"=>"https://www.judicialwatch.org/petitions/demand-secure-border-now/?source=69&utm_medium=display&utm_source=google&utm_campaign=20191003_Judicial-37100_google&utm_content=Judicial-37100&gclid=EAIaIQobChMIzpOgqsm95gIVxdvACh3HuAG-EAEYASAAEgI3lfD_BwE", "reasons"=>["The video you're watching", "Websites you've visited"], "reasons_title"=>"Paid for by JUDICIAL WATCH INC.\r\n\r\nThis ad is based on:"}, "host"=>{"url"=>"https://www.youtube.com/watch?v=qFCeznGIXKs", "id"=>"qFCeznGIXKs", "author"=>"Fox News", "channel_ID"=>"UCXIJgqnII2ZOINSWNOGFThA", "title"=>"Giuliani admits to forcing out Yovanovitch: 'She's corrupt'"}, "user"=>"019ee40b-4a57-4105-864d-c4eaf9811c98"}
+ -->

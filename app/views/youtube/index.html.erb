@@ -1,0 +1,52 @@
+<html>
+<head>
+  <title>Interim YouTube Ads Dashboard</title>
+</head>
+<body>
+  <a href="/">Home: FB dashboard</a>
+  <h1>Jeremy's Interim YouTube Ads Dashboard</h1>
+
+  <div>
+    <h2><%= @ads_count %> Ads</h2>
+    <h2><%= @political_ads_count %> Political Ads</h2>
+    <!-- <h2>0 Users</h2> -->
+  </div>
+
+  <div>
+    Ads per political advertiser:
+    <ul>
+      <% @political_advertisers.sort_by{|advertiser, ads| ads.size }.reverse.each do |advertiser, ads| %>
+      <li><%= ads.size %> - <a href="advertiser/<%= Base64.encode64(advertiser) %>"><%= advertiser %></a></li>
+      <% end %>
+    <ul>
+  </div>
+
+  <div>
+    Political targetings:
+    <ul>
+      <% @political_targetings.sort_by{|reason, count| count }.reverse.each do |reason, count| %>
+      <li><%= count %> - <a href="targeting/<%= Base64.encode64(reason) %>"><%= reason %></a></li>
+      <% end %>
+    <ul>
+  </div>
+
+  <div>
+    Ads per advertiser:
+    <ul>
+      <% @advertisers.sort_by{|advertiser, ads| ads.size }.reverse.each do |advertiser, ads| %>
+      <li><%= ads.size %> - <a href="advertiser_all/<%= Base64.encode64(advertiser) %>"><%= advertiser %></a></li>
+      <% end %>
+    <ul>
+  </div>
+
+  <div>
+    targetings:
+    <ul>
+      <% @targetings.sort_by{|reason, count| count }.reverse.each do |reason, count| %>
+      <li><%= count %> - <a href="targeting_all/<%= Base64.encode64(reason) %>"><%= reason %></a></li>
+      <% end %>
+    <ul>
+  </div>
+
+</body>
+</html>

@@ -22,4 +22,13 @@ Rails.application.routes.draw do
   get "ads_by_text/:text_hash", to: "ads#show_by_text"
 
   get "bigspenders", to: "pages#new_since_about_a_week_ago"
+
+
+  get "interim/youtube/", to: "youtube#index"
+  get "interim/youtube/advertiser/:targ", to: "youtube#advertiser"
+  get 'interim/youtube/targeting/:targ', to: "youtube#targeting"
+  get 'interim/youtube/targeting_all/:targ', to: "youtube#targeting_all"
+  get 'interim/youtube/advertiser_all/:targ', to: "youtube#advertiser_all"
+
+
 end

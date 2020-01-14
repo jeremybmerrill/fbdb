@@ -10,6 +10,7 @@ gem 'elasticsearch-model', github: 'elastic/elasticsearch-rails', branch: '6.x'
 gem 'elasticsearch-rails', github: 'elastic/elasticsearch-rails', branch: '6.x'
 gem 'elasticsearch-dsl', github: 'elastic/elasticsearch-ruby', branch: '6.x'
 
+gem "couchrest"
 
 gem "rest-client"
 gem "ruby-progressbar"

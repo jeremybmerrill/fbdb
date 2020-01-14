@@ -35,6 +35,7 @@ class AdsController < ApplicationController
         @min_impressions = @ads.joins(:impressions).sum(:min_impressions)
         @max_impressions = @ads.joins(:impressions).sum(:max_impressions)
 
+        #TODO: distinct images/videos (needs ad library scrape, I think)
 
         respond_to do |format|
           format.html
@@ -105,6 +106,7 @@ class AdsController < ApplicationController
         # keywordsearch URL?
         # some sort of search UTM params
         # keywordsearch: targeting 
+        
         # filter: disclaimer, advertiser
         # keywordsearch disclaimers?
         # time based filter
