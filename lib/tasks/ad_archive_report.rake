@@ -210,6 +210,7 @@ namespace :ad_archive_report do
             else
                 prev_aarp = AdArchiveReportPage.find_by(ad_archive_report_id: previous_report.id, page_id: page_id, disclaimer: disclaimer)
                 amount_spent = aarp_amount_spent - prev_aarp.amount_spent
+                is_new = is_new || prev_aarp.amount_spent < MINIMUM_NEW_ADVERTISER_ALERT_AMOUNT
             end
 
             if (is_new && amount_spent > MINIMUM_NEW_ADVERTISER_ALERT_AMOUNT) || (!is_new && amount_spent > MINIMUM_EXISTING_ADVERTISER_ALERT_AMOUNT)
