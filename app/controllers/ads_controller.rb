@@ -93,14 +93,6 @@ class AdsController < ApplicationController
         end
     end
 
-    def no_payer
-        @fbpac_ads = FbpacAd.where(paid_for_by: nil, lang: "en-US").order("created_at desc").paginate(page: params[:page], per_page: 30)
-        respond_to do |format|
-            format.html 
-            format.json { render json: @fbpac_ads }
-        end
-    end
-
     def search
         # keywordsearch: ad text
         # keywordsearch URL?
@@ -142,15 +134,19 @@ class AdsController < ApplicationController
                 # TODO: targeting, if we end up getting it.
                 # TODO: filter by  states seen, impressions minimums/maximums, topics
 
+                # should this actually search AdTexts, which join to both Ad and FbpacAd?
+
               end if [page_id, publish_date, topic, no_payer].any?{|a| a }
             end
           end
         end
-        @ads = Ad.search(query)
-        @fbpac_ads = FbpacAd.search(query)
+        @mixed_ads = Elasticsearch::Model.search(query, [Ad, FbpacAd]).paginate(page: params[:page], per_page: 30).results
+
         respond_to do |format|
             format.html 
-            format.json { render json: @ads.as_json + @fbpac_ads.as_json  }
+            format.json { 
+                render json: @mixed_ads.as_json
+             }
         end
     end
 end

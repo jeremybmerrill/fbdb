@@ -14,7 +14,6 @@ Rails.application.routes.draw do
   put "writable_pages/:page_id", to: 'writable_pages#update'
 
   get "ads", to: "ads#index"
-  get "ads/nopayer/", to: "ads#no_payer" # temporary??
   get "ads/search/", to: "ads#search"
   get "ads/:archive_id", to: "ads#show"
   get "ads_by_ad_id/:ad_id", to: "ads#show"
