@@ -31,4 +31,6 @@ namespace :text do
   end  
 
   
+# rake environment elasticsearch:import:model CLASS='FbpacAd' FORCE=y
+
 end 

@@ -14,6 +14,9 @@ class FbpacAd < ApplicationRecord
   #   end
   # end
 
+  mapping dynamic: true do 
+    indexes :lang, type: :keyword
+  end
 
 
 
@@ -23,6 +26,7 @@ class FbpacAd < ApplicationRecord
     json = self.as_json() # TODO: this needs a lot of work, I don't know the right way to do this, presumably I'll want writablefbpacads too
 #      json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
     json["paid_for_by"] = MISSING_STR if (json["paid_for_by"].nil? || json["paid_for_by"].empty?) && json["created_at"] > "2018-07-01" 
+    json["creation_date"] = json.delete("created_at")
     json
   end
 

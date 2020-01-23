@@ -84,12 +84,13 @@ class AdsController < ApplicationController
     end
 
     def index
-        # eventually the search method?
-        @ads = Ad.includes(:fbpac_ad).paginate(page: params[:page], per_page: 30)
+        # eventually the search method? 
+        # this is the method for browinsg random recent ads
+        @ads = Ad.includes(:writable_ad).paginate(page: params[:page], per_page: 30)
 
         respond_to do |format|
             format.html 
-            format.json { render json: @ads.as_json(include: :fbpac_ad) }
+            format.json { render json: @ads.as_json(include: :writable_ad) }
         end
     end
 
@@ -108,6 +109,7 @@ class AdsController < ApplicationController
         publish_date = nil # "2019-01-01"
         topic = params[:topic]
         no_payer = params[:no_payer]
+        lang = params[:lang]
 
         query = Elasticsearch::DSL::Search.search do
           query do
@@ -122,30 +124,42 @@ class AdsController < ApplicationController
                 end if search
               end if search
               filter do
-                term page_id: page_id.to_i if page_id
                 range :creation_date do  
                   gte publish_date 
-                end if publish_date
-                terms topics: [topic] if topic
-                 
-                term paid_for_by: FbpacAd::MISSING_STR if no_payer # will ONLY return FBPAC ads
-               
+                end 
                 # targeting is included via FBPAC. But what do we do about searching ads that don't have an ATIAd counterpart??
                 # TODO: targeting, if we end up getting it.
                 # TODO: filter by  states seen, impressions minimums/maximums, topics
 
                 # should this actually search AdTexts, which join to both Ad and FbpacAd?
 
-              end if [page_id, publish_date, topic, no_payer].any?{|a| a }
+              end if publish_date
+              filter do
+                terms topics: [topic]
+              end if topic
+              filter do
+                term page_id: page_id.to_i 
+              end if page_id
+              filter do
+                term lang: lang
+              end if lang
+              filter do
+                term paid_for_by: FbpacAd::MISSING_STR  # will ONLY return FBPAC ads
+              end if no_payer
             end
           end
+          sort do 
+            by :creation_date, 'desc'
+          end
         end
-        @mixed_ads = Elasticsearch::Model.search(query, [Ad, FbpacAd]).paginate(page: params[:page], per_page: 30).results
+        @mixed_ads = Elasticsearch::Model.search(query, [Ad, FbpacAd]).paginate(page: params[:page], per_page: 30).records(includes: :writable_ad)
+
+        puts @mixed_ads.inspect
 
         respond_to do |format|
             format.html 
             format.json { 
-                render json: @mixed_ads.as_json
+                render json: @mixed_ads.as_json(include: :writable_ad)
              }
         end
     end
