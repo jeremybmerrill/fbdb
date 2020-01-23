@@ -13,6 +13,9 @@ end
 
 
 class YoutubeController < ApplicationController
+
+  before_action :force_trailing_slash
+
   REASONS_KINDS = [
     "This ad is based on:",
     "This ad may be based on:",
