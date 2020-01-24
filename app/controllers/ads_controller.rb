@@ -5,19 +5,17 @@ class AdsController < ApplicationController
 
     def show
         if params[:archive_id]
-            @ad = Ad.find_by(archive_id: params[:archive_id]) 
+            @some_kind_of_ad = Ad.find_by(archive_id: params[:archive_id]) 
         elsif params[:ad_id]
-            @ad = Ad.find(ad_id: params[:ad_id])
+            @some_kind_of_ad = FbpacAd.find(ad_id: params[:ad_id])
         end
 
-
-        @fbpac_ad = @ad.fbpac_ad
-        @writable_ad = @ad.writable_ad
+        @writable_ad = @some_kind_of_ad.writable_ad
 
         respond_to do |format|
           format.html
           format.json { render json: {
-            ad: @ad.as_json(include: [:fbpac_ad, :writable_ad, :topics])
+            ad: @some_kind_of_ad.as_json(include: [:writable_ad, :topics])
           } }
         end
     end
@@ -47,7 +45,7 @@ class AdsController < ApplicationController
             max_spend: @max_spend,
             min_impressions: @min_impressions,
             max_impressions: @max_impressions,
-            ads: @ads.as_json(include: [:impressions, :writable_ad]) + @fbpac_ads.as_json(include: [:writable_ad]),
+            ads: @ads.as_json(include: {impressions: {}}) + @fbpac_ads.as_json(include: [:writable_ad]),
             } 
           }
         end
@@ -115,7 +113,7 @@ class AdsController < ApplicationController
           query do
             bool do
               must do
-                multi_match do
+                query_string do
                   query search
                     fields [
                             :text, :payer_name, :page_name, # Ad

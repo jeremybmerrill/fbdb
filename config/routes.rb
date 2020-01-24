@@ -3,7 +3,7 @@ Rails.application.routes.draw do
   get 'writable_pages/update'
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
 
- root to: "ads#overview"
+  root to: "ads#overview"
 
   get "payers", to: "payers#index"
   get "payers/:id", to: "payers#show"
@@ -17,7 +17,7 @@ Rails.application.routes.draw do
   get "ads/search/", to: "ads#search"
   get "ads/:archive_id", to: "ads#show"
   get "ads_by_ad_id/:ad_id", to: "ads#show"
-  get "ads_by_archive_ad/:archive_id", to: "ads#show"
+  get "ads_by_archive_id/:archive_id", to: "ads#show"
   get "ads_by_text/:text_hash", to: "ads#show_by_text"
 
   get "bigspenders", to: "pages#new_since_about_a_week_ago"

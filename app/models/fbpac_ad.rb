@@ -19,6 +19,16 @@ class FbpacAd < ApplicationRecord
   end
 
 
+  def as_json(options={})
+    # translating this schema to match the FB one as much as possible
+    super.tap do |json|
+      json["creation_date"] = json.delete("created_at")
+      json["text"] = json.delete("message")
+      json["funding_entity"] = json.delete("paid_for_by")
+      json["start_date"] = json.delete("created_at")
+    end
+  end
+
 
   MISSING_STR = "missingpaidforby"
 
@@ -26,11 +36,10 @@ class FbpacAd < ApplicationRecord
     json = self.as_json() # TODO: this needs a lot of work, I don't know the right way to do this, presumably I'll want writablefbpacads too
 #      json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
     json["paid_for_by"] = MISSING_STR if (json["paid_for_by"].nil? || json["paid_for_by"].empty?) && json["created_at"] > "2018-07-01" 
-    json["creation_date"] = json.delete("created_at")
     json
   end
 
   def clean_text
-    Nokogiri::HTML(message).text.strip.downcase.gsub(/\s/, ' ').gsub(/[^a-z 0-9]/, '')
+    Nokogiri::HTML(message).text.strip.downcase.gsub(/\s+/, ' ').gsub(/[^a-z 0-9]/, '')
   end
 end

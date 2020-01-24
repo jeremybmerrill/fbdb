@@ -18,15 +18,25 @@ class Ad < ApplicationRecord
     include Elasticsearch::Model
     index_name Rails.application.class.module_parent_name.underscore + "_" + self.name.downcase
     document_type self.name.downcase
-    def as_indexed_json(options={}) # for ElasticSearch
-      json = self.as_json(
+
+    def as_json(options={})
+      # translating this schema to match the FB one as much as possible
+      super(
         include: { page: { only: :page_name },
                    payer:    { only: :name },
                    topics:   { only: :topic }
-                 })
-      json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
-      json
+                 }.merge(options[:include])).tap do |json|
+        json["advertiser"] = json["page"]["page_name"]
+        json.delete("page")
+        json["funding_entity"] = json["funding_entity"] || (json["payer"] || {})["name"]
+        json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
+      end
     end
+
+    # def as_indexed_json(options={}) # for ElasticSearch
+    #   json = self.as_json
+    #   json
+    # end
 
     def min_spend
         impressions.first.min_spend
@@ -58,7 +68,7 @@ class Ad < ApplicationRecord
 
 
     def clean_text
-      text.strip.downcase.gsub(/\s/, ' ').gsub(/[^a-z 0-9]/, '')
+      text.strip.downcase.gsub(/\s+/, ' ').gsub(/[^a-z 0-9]/, '')
     end
 end
 
