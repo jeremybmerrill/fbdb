@@ -20,13 +20,13 @@ class Ad < ApplicationRecord
     document_type self.name.downcase
 
     def as_json(options={})
-      # translating this schema to match the FB one as much as possible
+      # translating this schema to match the FBPAC one as much as possible
       super(
-        include: { page: { only: :page_name },
+        {include: { page: { only: :page_name },
                    payer:    { only: :name },
                    topics:   { only: :topic }
-                 }.merge(options[:include])).tap do |json|
-        json["advertiser"] = json["page"]["page_name"]
+                 }}.deep_merge(options)).tap do |json|
+        json["advertiser"] = (json["page"] || {})["page_name"]
         json.delete("page")
         json["funding_entity"] = json["funding_entity"] || (json["payer"] || {})["name"]
         json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
