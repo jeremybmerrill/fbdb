@@ -1,5 +1,31 @@
 require 'elasticsearch/dsl'
 
+module Elasticsearch
+  module DSL
+    module Search
+      module Filters
+        class Nested
+          def query(*args, &block)
+            @query = block ? Elasticsearch::DSL::Search::Query.new(*args, &block) : args.first
+            self
+          end
+          def to_hash
+            hash = super
+            if @filter
+              _filter = @filter.respond_to?(:to_hash) ? @filter.to_hash : @filter
+              hash[self.name].update(filter: _filter)
+            end
+            if @query
+              _query = @query.respond_to?(:to_hash) ? @query.to_hash : @query
+              hash[self.name].update(query: _query)
+            end
+            hash
+          end
+        end
+      end
+    end
+  end
+end
 
 class AdsController < ApplicationController
 
@@ -108,7 +134,10 @@ class AdsController < ApplicationController
         topic = params[:topic]
         no_payer = params[:no_payer]
         lang = params[:lang]
-
+        targeting = JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
+                        # targeting[][0]=MinAge&targeting[][1]=59&targeting[][0]=Interest&targeting[][1]=Sean Hannity
+                        # targeting[][]=MinAge&targeting[][]=59&targeting[][]=Interest&targeting[][]=Sean Hannity
+        puts targeting.inspect
         query = Elasticsearch::DSL::Search.search do
           query do
             bool do
@@ -125,13 +154,34 @@ class AdsController < ApplicationController
                 range :creation_date do  
                   gte publish_date 
                 end 
-                # targeting is included via FBPAC. But what do we do about searching ads that don't have an ATIAd counterpart??
-                # TODO: targeting, if we end up getting it.
-                # TODO: filter by  states seen, impressions minimums/maximums, topics
+              end if publish_date
 
+                # TODO: filter by  states seen, impressions minimums/maximums, topics
                 # should this actually search AdTexts, which join to both Ad and FbpacAd?
 
-              end if publish_date
+            # targeting is included via FBPAC. But what do we do about searching ads that don't have an ATIAd counterpart??
+            # TODO: targeting, if we end up getting it.
+            # TODO: this doesn't work with multiple targets
+            targeting.each do |target, segment|
+                filter do 
+                # term "targets.segment": "59" # works but can't distinguish minage/maxage
+                # term "targets": {"target": "MinAge", "segment": "59"} # error
+                    nested do 
+                        path "targets"
+                        query do 
+                            bool do 
+                                must do 
+                                    term "targets.target": target
+                                end
+                                must do
+                                    term "targets.segment": segment
+                                end if segment
+                            end
+                        end
+                    end
+                end if targeting
+            end
+
               filter do
                 terms topics: [topic]
               end if topic
@@ -150,9 +200,8 @@ class AdsController < ApplicationController
             by :creation_date, 'desc'
           end
         end
+        puts query.as_json.inspect
         @mixed_ads = Elasticsearch::Model.search(query, [Ad, FbpacAd]).paginate(page: params[:page], per_page: 30).records(includes: :writable_ad)
-
-        puts @mixed_ads.inspect
 
         respond_to do |format|
             format.html 
