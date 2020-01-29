@@ -17,6 +17,7 @@ gem "ruby-progressbar"
 gem "selenium"
 gem "webdrivers"
 gem 'devise'
+gem 'rack-cors'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 6.0.0'
