@@ -13,7 +13,7 @@ module AtiDashboard
 
     config.middleware.insert_before 0, Rack::Cors do
       allow do
-        origins 'http://localhost:3000'
+        origins 'http://localhost:3000', 'http://pol-ad-dashboard.s3-website.us-east-2.amazonaws.com/'
         resource '*', headers: :any, methods: [:get]
       end
     end
