@@ -17,7 +17,7 @@ module AtiDashboard
         resource '*', headers: :any, methods: [:get]
       end
       allow do
-        origins 'http://pol-ad-dashboard.s3-website.us-east-2.amazonaws.com/'
+        origins 'http://pol-ad-dashboard.s3-website.us-east-2.amazonaws.com'
         resource '*', headers: :any, methods: [:get]
       end
     end
