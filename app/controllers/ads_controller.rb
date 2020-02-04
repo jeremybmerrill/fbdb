@@ -225,10 +225,12 @@ class AdsController < ApplicationController
     end
 
     def topics
-        format.json {
-            render json: {
-                topics: TOPICS
+        respond_to do |format|
+            format.json {
+                render json: {
+                    topics: TOPICS
+                }
             }
-        }
+        end
     end
 end

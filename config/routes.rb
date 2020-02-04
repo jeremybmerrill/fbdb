@@ -13,10 +13,10 @@ Rails.application.routes.draw do
   get "pages_by_name/:page_name", to: "pages#show"
 
   put "writable_pages/:page_id", to: 'writable_pages#update'
+  get "topics", to: "ads#topics"
 
   get "ads", to: "ads#index"
   get "ads/search/", to: "ads#search"
-  get "ads/topics", to: "ads#topics"
   get "ads/:archive_id", to: "ads#show"
   get "ads_by_ad_id/:ad_id", to: "ads#show"
   get "ads_by_archive_id/:archive_id", to: "ads#show"
