@@ -10,6 +10,7 @@ Rails.application.routes.draw do
 
   get "pages", to: "pages#index"
   get "pages/:id", to: "pages#show"
+  get "pages_by_name/:page_name", to: "pages#show"
 
   put "writable_pages/:page_id", to: 'writable_pages#update'
 
@@ -28,6 +29,4 @@ Rails.application.routes.draw do
   get 'interim/youtube/targeting/:targ', to: "youtube#targeting"
   get 'interim/youtube/targeting_all/:targ', to: "youtube#targeting_all"
   get 'interim/youtube/advertiser_all/:targ', to: "youtube#advertiser_all"
-
-
 end

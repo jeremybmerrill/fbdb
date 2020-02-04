@@ -3,8 +3,9 @@ class PagesController < ApplicationController
 
 	def show
 		# 153080620724 is Trump
+		# FBPAC ads only sometimes have a page_id
 
-		@page = Page.find_by(page_id: params[:id])
+		@page = params[:id] ? Page.find_by(page_id: params[:id]) : Page.find_by(page_name: params[:page_name])
 
 		# count of ads
 		@count_ads = @page.ads.size
