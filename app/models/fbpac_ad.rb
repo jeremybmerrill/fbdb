@@ -28,7 +28,8 @@ class FbpacAd < ApplicationRecord
     super.tap do |json|
       json["creation_date"] = json.delete("created_at")
       json["text"] = json.delete("message") # TODO: remove HTML tags
-      json["funding_entity"] = json.delete("paid_for_by")
+      json["funding_entity"] = json["paid_for_by"]
+      # what if page_id doesn't exist?!
       json["start_date"] = json.delete("created_at")
     end
   end
@@ -39,7 +40,7 @@ class FbpacAd < ApplicationRecord
   def as_indexed_json(options={}) # for ElasticSearch
     json = self.as_json() # TODO: this needs a lot of work, I don't know the right way to do this, presumably I'll want writablefbpacads too
 #      json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
-    json["paid_for_by"] = MISSING_STR if (json["paid_for_by"].nil? || json["paid_for_by"].empty?) && json["created_at"] && json["created_at"]> "2018-07-01" 
+    json["paid_for_by"] = MISSING_STR if (json["paid_for_by"].nil? || json["paid_for_by"].empty?) && json["creation_date"] && json["creation_date"]> "2018-07-01" 
     json
   end
 
