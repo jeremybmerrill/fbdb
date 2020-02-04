@@ -29,6 +29,8 @@ end
 
 class AdsController < ApplicationController
 
+    TOPICS = ["Economic Policy","Social Issues","Law and Order","Social Welfare Issues","Foreign/Defense Policy","Environment/Energy","Immigration","Impeachment","Census","Vaccinations","Voting","Trump Merch","Affiliate MarketingTaxes","Deficit/Budget/Debt","Government Spending","Recession/Economic Stimulus","Minimum Wage","Farming","Business","Wall Street","Union","Employment/Jobs","Poverty","Trade/Globalization","Housing/Sub-prime Mortgages","Economy (generic reference)","Economic disparity/income inequality","Abortion","Homosexuality/Gay & Lesbian Rights","Moral/Family/Religious Values","Tobacco","Affirmative Action","Gambling","Assisted Suicide/Euthanasia","Gun Control","Civil Liberties/Privacy","Race Relations/Civil Rights/White supremacy","Crime","Narcotics/Illegal Drugs","Capital Punishment","Supreme Court/Judiciary","Education/Schools","Lottery for Education","Child Care","Health Care (not prescription drugs)","Prescription Drugs","Medicare","Social Security","Welfare","Military","Foreign Policy","Veterans","Foreign Aid","Nuclear Proliferation","China","Middle East","Afghanistan","September 11th","Terror/Terrorism/Terrorist","Iraq","Israel","Iran","Environment","Global Warming","Energy","BP Oil Spill","Immigration","Wall","Ukraine","Impeachment","Census","Vaccinations","Voting","Gender issues","Women's rights","TrumpMerch","Affiliate Marketing"]
+
     def show
         if params[:archive_id]
             @some_kind_of_ad = Ad.find_by(archive_id: params[:archive_id]) 
@@ -220,5 +222,13 @@ class AdsController < ApplicationController
                 }
              }
         end
+    end
+
+    def topics
+        format.json {
+            render json: {
+                topics: TOPICS
+            }
+        }
     end
 end
