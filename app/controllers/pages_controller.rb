@@ -70,7 +70,14 @@ class PagesController < ApplicationController
 
 		respond_to do |format|
 			format.html 
-			format.json { render json: @pages }
+			format.json { render json: {
+					pages: @pages, 
+          total_ads: @pages.total_entries,
+          n_pages: @pages.total_pages,
+          page: params[:page] || 1
+				}
+			}
+
 		end
 	end
 

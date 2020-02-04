@@ -71,7 +71,13 @@ class PayersController < ApplicationController
 
 		respond_to do |format|
 			format.html 
-			format.json { render json: @payers }
+			format.json { render json: {
+					payers: @payers, 
+          total_ads: @payers.total_entries,
+          n_pages: @payers.total_pages,
+          page: params[:page] || 1
+				}
+			}
 		end
 	end
 

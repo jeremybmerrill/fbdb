@@ -114,7 +114,14 @@ class AdsController < ApplicationController
 
         respond_to do |format|
             format.html 
-            format.json { render json: @ads.as_json(include: :writable_ad) }
+            format.json { render json: {
+                    ads: @ads.as_json(include: :writable_ad), 
+                    total_ads: @ads.total_entries,
+                    n_pages: @ads.total_pages,
+                    page: params[:page] || 1
+                }
+            }
+
         end
     end
 
@@ -130,11 +137,11 @@ class AdsController < ApplicationController
 
         search = params[:search]
         page_id = params[:page_id]
-        publish_date = nil # "2019-01-01"
+        publish_date = params[:publish_date] # "2019-01-01"
         topic = params[:topic]
         no_payer = params[:no_payer]
         lang = params[:lang]
-        targeting = JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
+        targeting = params[:targeting].nil? ? nil : JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
                         # targeting[][0]=MinAge&targeting[][1]=59&targeting[][0]=Interest&targeting[][1]=Sean Hannity
                         # targeting[][]=MinAge&targeting[][]=59&targeting[][]=Interest&targeting[][]=Sean Hannity
         puts targeting.inspect
@@ -162,7 +169,7 @@ class AdsController < ApplicationController
             # targeting is included via FBPAC. But what do we do about searching ads that don't have an ATIAd counterpart??
             # TODO: targeting, if we end up getting it.
             # TODO: this doesn't work with multiple targets
-            targeting.each do |target, segment|
+            targeting&.each do |target, segment|
                 filter do 
                 # term "targets.segment": "59" # works but can't distinguish minage/maxage
                 # term "targets": {"target": "MinAge", "segment": "59"} # error
@@ -202,11 +209,15 @@ class AdsController < ApplicationController
         end
         puts query.as_json.inspect
         @mixed_ads = Elasticsearch::Model.search(query, [Ad, FbpacAd]).paginate(page: params[:page], per_page: 30).records(includes: :writable_ad)
-
         respond_to do |format|
             format.html 
             format.json { 
-                render json: @mixed_ads.as_json(include: :writable_ad)
+                render json: {
+                    ads: @mixed_ads.as_json(include: :writable_ad),
+                    total_ads: @mixed_ads.total_entries,
+                    n_pages: @mixed_ads.total_pages,
+                    page: params[:page] || 1
+                }
              }
         end
     end
