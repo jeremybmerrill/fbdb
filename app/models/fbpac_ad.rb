@@ -32,6 +32,7 @@ class FbpacAd < ApplicationRecord
       # what if page_id doesn't exist?!
 #      json["page_id"] 
       json["start_date"] = json.delete("created_at")
+      json = json.merge(json.delete("writable_ad"))
     end
   end
 

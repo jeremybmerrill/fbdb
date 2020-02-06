@@ -28,8 +28,7 @@ module Elasticsearch
 end
 
 class AdsController < ApplicationController
-
-    TOPICS = ["Economic Policy","Social Issues","Law and Order","Social Welfare Issues","Foreign/Defense Policy","Environment/Energy","Immigration","Impeachment","Census","Vaccinations","Voting","Trump Merch","Affiliate MarketingTaxes","Deficit/Budget/Debt","Government Spending","Recession/Economic Stimulus","Minimum Wage","Farming","Business","Wall Street","Union","Employment/Jobs","Poverty","Trade/Globalization","Housing/Sub-prime Mortgages","Economy (generic reference)","Economic disparity/income inequality","Abortion","Homosexuality/Gay & Lesbian Rights","Moral/Family/Religious Values","Tobacco","Affirmative Action","Gambling","Assisted Suicide/Euthanasia","Gun Control","Civil Liberties/Privacy","Race Relations/Civil Rights/White supremacy","Crime","Narcotics/Illegal Drugs","Capital Punishment","Supreme Court/Judiciary","Education/Schools","Lottery for Education","Child Care","Health Care (not prescription drugs)","Prescription Drugs","Medicare","Social Security","Welfare","Military","Foreign Policy","Veterans","Foreign Aid","Nuclear Proliferation","China","Middle East","Afghanistan","September 11th","Terror/Terrorism/Terrorist","Iraq","Israel","Iran","Environment","Global Warming","Energy","BP Oil Spill","Immigration","Wall","Ukraine","Impeachment","Census","Vaccinations","Voting","Gender issues","Women's rights","TrumpMerch","Affiliate Marketing"]
+    PAGE_SIZE = 30
 
     def show
         if params[:archive_id]
@@ -112,7 +111,7 @@ class AdsController < ApplicationController
     def index
         # eventually the search method? 
         # this is the method for browinsg random recent ads
-        @ads = Ad.includes(:writable_ad).paginate(page: params[:page], per_page: 30)
+        @ads = Ad.includes(:writable_ad).paginate(page: params[:page], per_page: PAGE_SIZE)
 
         respond_to do |format|
             format.html 
@@ -128,6 +127,62 @@ class AdsController < ApplicationController
     end
 
     def search
+        search = params[:search]
+        lang = params[:lang] || "en-US" # TODO.
+        page_ids = params[:page_id] ? [params[:page_id]] : []# TODO support multiple?
+        advertiser_names = [] # TODO.
+        publish_date = params[:publish_date] # e.g. "2019-01-01"
+        topic_id = params[:topic_id] # TODO: this isn't supported yet by the frontend, it just sends a topic name
+        topic_id = Topic.find_by(topic: params[:topic])&.id if !topic_id && params[:topic]
+        no_payer = params[:no_payer]
+        targeting = params[:targeting].nil? ? nil : JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
+
+        @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).where("fbpac_ads.lang = ?", lang) # ad_texts need lang (or country)
+        if params[:search]
+            @ads = @ads.search_for(search)
+        else
+            @ads.order("coalesce(created_at, creation_date) desc")
+        end
+
+        # TODO: sort order.
+        # TODO: duplicate ad_texts.
+        if page_ids.size + advertiser_names.size > 0  # can be either a number or an advertiser
+            @ads = @ads.where("fbpac_ads.advertiser in (?) or ads.page_id in (?)", advertiser_names, page_ids)
+        end
+
+        if publish_date
+            @ads = @ads.where("fbpac_ads.created_at > ? or ads.creation_date > ?",  publish_date, publish_date)
+        end
+
+        if topic_id
+            @ads = @ads.join(:ad_topics).where(topic_id: topic_id)
+        end
+
+        if no_payer # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
+            @ads = @ads.where("fbpac_ads.paid_for_by is null and ads.archive_id is null")
+        end
+
+        if targeting # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
+                     # TODO: adapt for a way to combine teh params states, ages.
+            @ads = @ads.where("fbpac_ads.targets @> ?",  targeting)
+        end
+
+        @ads = @ads.with_pg_search_rank.distinct.paginate(page: params[:page], per_page: PAGE_SIZE) #.includes(writable_ads: [:fbpac_ad, :ad])
+
+        respond_to do |format|
+            format.html 
+            format.json { 
+                render json: {
+                    ads: @ads.as_json(include: {writable_ads: {include: [:fbpac_ad, :ad]}}),
+                    total_ads: @ads.total_entries,
+                    n_pages: @ads.total_pages,
+                    page: params[:page] || 1
+                }
+             }
+        end
+    end
+
+    def search2
         # keywordsearch: ad text
         # keywordsearch URL?
         # some sort of search UTM params
@@ -210,7 +265,7 @@ class AdsController < ApplicationController
           end
         end
         puts query.as_json.inspect
-        @mixed_ads = Elasticsearch::Model.search(query, [Ad, FbpacAd]).paginate(page: params[:page], per_page: 30).records(includes: :writable_ad)
+        @mixed_ads = Elasticsearch::Model.search(query, [Ad, FbpacAd]).paginate(page: params[:page], per_page: PAGE_SIZE).records(includes: :writable_ad)
         respond_to do |format|
             format.html 
             format.json { 
@@ -228,7 +283,7 @@ class AdsController < ApplicationController
         respond_to do |format|
             format.json {
                 render json: {
-                    topics: TOPICS
+                    topics: Topic.select(:id, :topic).map{|a| [a.topic, a.id]}
                 }
             }
         end

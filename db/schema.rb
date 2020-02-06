@@ -10,10 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_01_08_181722) do
+ActiveRecord::Schema.define(version: 2020_02_05_183726) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+  enable_extension "unaccent"
 
   create_table "ad_archive_report_pages", force: :cascade do |t|
     t.bigint "page_id"
@@ -45,6 +46,8 @@ ActiveRecord::Schema.define(version: 2020_01_08_181722) do
     t.text "vec"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.text "search_text"
+    t.index "to_tsvector('english'::regconfig, search_text)", name: "index_ads_on_search_text", using: :gin
   end
 
   create_table "ad_topics", force: :cascade do |t|
@@ -53,6 +56,7 @@ ActiveRecord::Schema.define(version: 2020_01_08_181722) do
     t.float "proportion"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "ad_text_id"
   end
 
   create_table "ads", id: false, force: :cascade do |t|
@@ -109,7 +113,7 @@ ActiveRecord::Schema.define(version: 2020_01_08_181722) do
     t.index ["ad_archive_id"], name: "demo_impressions_archive_id_idx"
   end
 
-  create_table "fbpac_ads", id: :bigint, default: nil, force: :cascade do |t|
+  create_table "fbpac_ads", id: :text, force: :cascade do |t|
     t.text "html", null: false
     t.integer "political", null: false
     t.integer "not_political", null: false
