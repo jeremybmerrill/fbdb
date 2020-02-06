@@ -20,6 +20,15 @@ module AtiDashboard
         origins 'http://pol-ad-dashboard.s3-website.us-east-2.amazonaws.com'
         resource '*', headers: :any, methods: [:get]
       end
+      
+      allow do
+        origins 'http://dashboard.qz.ai:8080'
+        resource '*', headers: :any, methods: [:get]
+      end
+      allow do
+        origins 'https://dashboard-frontend.qz.ai'
+        resource '*', headers: :any, methods: [:get]
+      end
     end
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers

@@ -30,6 +30,7 @@ class FbpacAd < ApplicationRecord
       json["text"] = json.delete("message") # TODO: remove HTML tags
       json["funding_entity"] = json["paid_for_by"]
       # what if page_id doesn't exist?!
+#      json["page_id"] 
       json["start_date"] = json.delete("created_at")
     end
   end
@@ -44,7 +45,10 @@ class FbpacAd < ApplicationRecord
     json
   end
 
+  def text
+    Nokogiri::HTML(message).text.strip
+  end
   def clean_text
-    Nokogiri::HTML(message).text.strip.downcase.gsub(/\s+/, ' ').gsub(/[^a-z 0-9]/, '')
+    text.downcase.gsub(/\s+/, ' ').gsub(/[^a-z 0-9]/, '')
   end
 end

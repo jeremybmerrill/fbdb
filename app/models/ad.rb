@@ -18,14 +18,23 @@ class Ad < ApplicationRecord
     include Elasticsearch::Model
     index_name Rails.application.class.module_parent_name.underscore + "_" + self.name.downcase
     document_type self.name.downcase
+    mapping dynamic: true do 
+      indexes :topics, type: :keyword
+    end
 
     def as_json(options={})
       # translating this schema to match the FBPAC one as much as possible
-      super(
-        {include: { page: { only: :page_name },
+      preset_options = {
+        include: { page: { only: :page_name },
                    payer:    { only: :name },
-                   topics:   { only: :topic }
-                 }}.deep_merge(options)).tap do |json|
+                   topics:   { only: :topic } 
+        }
+      }
+      if options[:include].is_a? Symbol
+        options[:include] = Hash[options[:include], nil]
+      end
+      options[:include] = preset_options[:include].deep_merge(!options.nil? && options[:include] ? options[:include] : {})
+      super(options).tap do |json|
         json["advertiser"] = (json["page"] || {})["page_name"]
         json.delete("page")
         json["funding_entity"] = json["funding_entity"] || (json["payer"] || {})["name"]
@@ -49,14 +58,6 @@ class Ad < ApplicationRecord
     def domain
         # has to come from collector ads or AdLibrary ads.
     end
-
-    # def topics
-    #   writable_ad.topics
-    # end
-
-    # def topic_writable_ads
-    #   writable_ad.topic_writable_ads
-    # end   
 
     # TODO: Exclude snapshot_url, is_active from JSON responses
     def serializable_hash(options={})
