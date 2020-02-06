@@ -39,7 +39,7 @@ class Ad < ApplicationRecord
         json.delete("page")
         json["funding_entity"] = json["funding_entity"] || (json["payer"] || {})["name"]
         json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
-        json = json.merge(json.delete("writable_ad"))
+        json = json.delete("writable_ad").merge(json)
       end
     end
 

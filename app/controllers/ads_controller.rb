@@ -139,7 +139,7 @@ class AdsController < ApplicationController
 
         @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).where("fbpac_ads.lang = ?", lang) # ad_texts need lang (or country)
         if params[:search]
-            @ads = @ads.search_for(search)
+            @ads = @ads.search_for(search).with_pg_search_rank
         else
             @ads.order("coalesce(created_at, creation_date) desc")
         end
@@ -167,7 +167,7 @@ class AdsController < ApplicationController
             @ads = @ads.where("fbpac_ads.targets @> ?",  targeting)
         end
 
-        @ads = @ads.with_pg_search_rank.distinct.paginate(page: params[:page], per_page: PAGE_SIZE) #.includes(writable_ads: [:fbpac_ad, :ad])
+        @ads = @ads.distinct.paginate(page: params[:page], per_page: PAGE_SIZE) #.includes(writable_ads: [:fbpac_ad, :ad])
 
         respond_to do |format|
             format.html 

@@ -30,7 +30,7 @@ class AdText < ApplicationRecord
       json = super(options)
       fbpac_ad = json["writable_ads"].find{|wad| wad.has_key?("fbpac_ad")}&.dig("fbpac_ad") || {}
       fbapi_ad = json["writable_ads"].find{|wad| wad.has_key?("ad")}&.dig("ad") || {}
-      fbpac_ad.merge(fbapi_ad).merge(json["writable_ads"].first.without("ad", "fbpac_ad"))
+      json["writable_ads"].first.without("ad", "fbpac_ad").merge(fbpac_ad.merge(fbapi_ad))
 
 
   #       # ad

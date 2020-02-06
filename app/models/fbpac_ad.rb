@@ -37,14 +37,14 @@ class FbpacAd < ApplicationRecord
   end
 
 
-  MISSING_STR = "missingpaidforby"
+#   MISSING_STR = "missingpaidforby"
 
-  def as_indexed_json(options={}) # for ElasticSearch
-    json = self.as_json() # TODO: this needs a lot of work, I don't know the right way to do this, presumably I'll want writablefbpacads too
-#      json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
-    json["paid_for_by"] = MISSING_STR if (json["paid_for_by"].nil? || json["paid_for_by"].empty?) && json["creation_date"] && json["creation_date"]> "2018-07-01" 
-    json
-  end
+#   def as_indexed_json(options={}) # for ElasticSearch
+#     json = self.as_json() # TODO: this needs a lot of work, I don't know the right way to do this, presumably I'll want writablefbpacads too
+# #      json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
+#     json["paid_for_by"] = MISSING_STR if (json["paid_for_by"].nil? || json["paid_for_by"].empty?) && json["creation_date"] && json["creation_date"]> "2018-07-01" 
+#     json
+#   end
 
   def text
     Nokogiri::HTML(message).text.strip
