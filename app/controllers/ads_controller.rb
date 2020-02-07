@@ -136,7 +136,7 @@ class AdsController < ApplicationController
         topic_id = Topic.find_by(topic: params[:topic])&.id if !topic_id && params[:topic]
         no_payer = params[:no_payer]
         targeting = params[:targeting].nil? ? nil : JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
-
+        poliprob = JSON.parse(params[:poliprob]) if params[:poliprob]
         @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).where("fbpac_ads.lang = ?", lang) # ad_texts need lang (or country)
         if params[:search]
             @ads = @ads.search_for(search).with_pg_search_rank # TODO maybe this should be by date too.
@@ -151,14 +151,32 @@ class AdsController < ApplicationController
         if publish_date
             @ads = @ads.where("fbpac_ads.created_at > ? or ads.creation_date > ?",  publish_date, publish_date)
         end
+        if publish_date
+            @ads = @ads.where("fbpac_ads.created_at > ? or ads.creation_date > ?",  publish_date, publish_date)
+        end
+
+
+        if poliprob
+            if poliprob.size != 2
+                raise ArgumentError, "poliprob needs to be a JSON array of two numbers"
+            end
+            condition = "(fbpac_ads.political_probability > and fbpac_ads.political_probability)"
+            condition += "or ads.archive_id is null" if poliprob[1] < 100
+            @ads = @ads.where(condition,  poliprob[0], poliprob[1])
+        end
+                # TODO poliprob. let's do a range this time.
+
 
         if topic_id
-            @ads = @ads.join(:ad_topics).where(topic_id: topic_id)
+            puts "topic_id: #{topic_id}"
+            @ads = @ads.joins(:ad_topics).where("ad_topics.topic_id": topic_id)
         end
 
         if no_payer # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
             @ads = @ads.where("fbpac_ads.paid_for_by is null and ads.archive_id is null")
         end
+
+
 
         if targeting # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
                      # TODO: adapt for a way to combine teh params states, ages.
