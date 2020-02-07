@@ -10,7 +10,7 @@ Rails.application.routes.draw do
 
   get "pages", to: "pages#index"
   get "pages/:id", to: "pages#show"
-  get "pages_by_name/:page_name", to: "pages#show"
+  get "pages_by_name/:page_name", to: "pages#show", :page_name => /[^\/]+(?=\.html\z|\.json\z)|[^\/]+/
 
   put "writable_pages/:page_id", to: 'writable_pages#update'
   get "topics", to: "ads#topics"
