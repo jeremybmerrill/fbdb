@@ -8,20 +8,9 @@ class Ad < ApplicationRecord
     has_many :impressions, primary_key: :archive_id, foreign_key: :ad_archive_id
     default_scope { order(:archive_id) } 
 
-    has_many :ad_topics, primary_key: :archive_id, foreign_key: :archive_id
-    has_many :topics, through: :ad_topics
     has_one  :writable_ad, primary_key: :archive_id, foreign_key: :archive_id # just a proxy
-
-
     has_one :fbpac_ad, primary_key: :ad_id, foreign_key: :id # doesn't work anymore, sadly
     
-    include Elasticsearch::Model
-    index_name Rails.application.class.module_parent_name.underscore + "_" + self.name.downcase
-    document_type self.name.downcase
-    mapping dynamic: true do 
-      indexes :topics, type: :keyword
-    end
-
     def as_json(options={})
       # translating this schema to match the FBPAC one as much as possible
       preset_options = {

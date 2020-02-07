@@ -2,6 +2,8 @@ class AdText < ApplicationRecord
 	has_many :writable_ads, primary_key: :text_hash, foreign_key: :text_hash
 	has_many :fbpac_ads, primary_key: :text_hash, foreign_key: :text_hash
 	# has_many :collector_ads
+  has_many :ad_topics
+  has_many :topics, through: :ad_topics
 
   include PgSearch::Model
 
@@ -18,7 +20,7 @@ class AdText < ApplicationRecord
 
   def as_json(options)
       preset_options = {
-        include: {writable_ads: {include: [:fbpac_ad, :ad]}}
+        include: {writable_ads: {include: [:fbpac_ad, :ad]}, topics: {}}
       }
       if options[:include].is_a? Symbol
         options[:include] = Hash[options[:include], nil]
@@ -30,7 +32,8 @@ class AdText < ApplicationRecord
       json = super(options)
       fbpac_ad = json["writable_ads"].find{|wad| wad.has_key?("fbpac_ad")}&.dig("fbpac_ad") || {}
       fbapi_ad = json["writable_ads"].find{|wad| wad.has_key?("ad")}&.dig("ad") || {}
-      json["writable_ads"].first.without("ad", "fbpac_ad").merge(fbpac_ad.merge(fbapi_ad))
+      topics = json.extract!("topics")
+      json["writable_ads"].first.without("ad", "fbpac_ad").merge(fbpac_ad.merge(fbapi_ad)).merge(topics)
 
 
   #       # ad

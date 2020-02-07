@@ -24,6 +24,7 @@ class AddSearchTextToAdTexts < ActiveRecord::Migration[6.0]
 
     remove_index :ad_texts, :tsv
     remove_column :ad_texts, :tsv
+    remove_column :ad_texts, :search_text
   end
 
 
