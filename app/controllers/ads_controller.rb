@@ -116,10 +116,10 @@ class AdsController < ApplicationController
         respond_to do |format|
             format.html 
             format.json { render json: {
-                    ads: @ads.as_json(include: :writable_ad), 
                     total_ads: @ads.total_entries,
                     n_pages: @ads.total_pages,
-                    page: params[:page] || 1
+                    page: params[:page] || 1,
+                    ads: @ads.as_json(include: :writable_ad), 
                 }
             }
 
@@ -139,13 +139,11 @@ class AdsController < ApplicationController
 
         @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).where("fbpac_ads.lang = ?", lang) # ad_texts need lang (or country)
         if params[:search]
-            @ads = @ads.search_for(search).with_pg_search_rank
+            @ads = @ads.search_for(search).with_pg_search_rank # TODO maybe this should be by date too.
         else
             @ads.order("coalesce(created_at, creation_date) desc")
         end
 
-        # TODO: sort order.
-        # TODO: duplicate ad_texts.
         if page_ids.size + advertiser_names.size > 0  # can be either a number or an advertiser
             @ads = @ads.where("fbpac_ads.advertiser in (?) or ads.page_id in (?)", advertiser_names, page_ids)
         end
@@ -164,7 +162,9 @@ class AdsController < ApplicationController
 
         if targeting # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
                      # TODO: adapt for a way to combine teh params states, ages.
-            @ads = @ads.where("fbpac_ads.targets @> ?",  targeting)
+                     # needs to be transformed from [["MinAge", 59], ["Interest", "Sean Hannity"]] into
+
+            @ads = @ads.where("fbpac_ads.targets @> ?",  JSON.dump(targeting.map{|a, b| b ? {target: a.to_s, segment: b.to_s} : {target: a.to_s} }))
         end
 
         @ads = @ads.distinct.paginate(page: params[:page], per_page: PAGE_SIZE) #.includes(writable_ads: [:fbpac_ad, :ad])
@@ -173,10 +173,10 @@ class AdsController < ApplicationController
             format.html 
             format.json { 
                 render json: {
-                    ads: @ads.as_json(include: {writable_ads: {include: [:fbpac_ad, :ad]}}),
                     total_ads: @ads.total_entries,
                     n_pages: @ads.total_pages,
-                    page: params[:page] || 1
+                    page: params[:page] || 1,
+                    ads: @ads.as_json(include: {writable_ads: {include: [:fbpac_ad, :ad]}}),
                 }
              }
         end
@@ -270,10 +270,10 @@ class AdsController < ApplicationController
             format.html 
             format.json { 
                 render json: {
-                    ads: @mixed_ads.as_json(include: :writable_ad),
                     total_ads: @mixed_ads.total_entries,
                     n_pages: @mixed_ads.total_pages,
-                    page: params[:page] || 1
+                    page: params[:page] || 1,
+                    ads: @mixed_ads.as_json(include: :writable_ad),
                 }
              }
         end
