@@ -32,11 +32,6 @@ class Ad < ApplicationRecord
       end
     end
 
-    # def as_indexed_json(options={}) # for ElasticSearch
-    #   json = self.as_json
-    #   json
-    # end
-
     def min_spend
         impressions.first.min_spend
     end
@@ -49,13 +44,13 @@ class Ad < ApplicationRecord
         # has to come from collector ads or AdLibrary ads.
     end
 
-    # TODO: Exclude snapshot_url, is_active from JSON responses
-    def serializable_hash(options={})
-      options = { 
-          exclude: [:snapshot_url, :is_active]
-      }.update(options)
-      super(options)
-    end
+    # # Exclude snapshot_url, is_active from JSON responses
+    # def serializable_hash(options={})
+    #   options = { 
+    #       exclude: [:snapshot_url, :is_active]
+    #   }.update(options)
+    #   super(options)
+    # end
 
 
     def clean_text

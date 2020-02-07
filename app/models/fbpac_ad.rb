@@ -2,25 +2,6 @@ class FbpacAd < ApplicationRecord
 #   belongs_to :ad, primary_key: :ad_id, foreign_key: :id # doesn't work anymore :(
 
   belongs_to :writable_ad, primary_key: :ad_id, foreign_key: :id
-  belongs_to :ad_text, primary_key: :ad_id, foreign_key: :id
-
-  include Elasticsearch::Model
-  index_name Rails.application.class.module_parent_name.underscore + "_" + self.name.downcase
-  document_type self.name.downcase
-  # settings index: { number_of_shards: 1 } do
-  #   mappings dynamic: 'false' do
-  #     indexes :title, analyzer: 'english', index_options: 'offsets'
-  #   end
-  # end
-
-  mapping dynamic: true do 
-    indexes :lang, type: :keyword
-    indexes :targets, type: 'nested' do
-      indexes :target,  type: :keyword
-      indexes :segment, type: :keyword
-    end
-  end
-
 
   def as_json(options={})
     # translating this schema to match the FB one as much as possible

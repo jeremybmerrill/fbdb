@@ -137,11 +137,11 @@ class AdsController < ApplicationController
         no_payer = params[:no_payer]
         targeting = params[:targeting].nil? ? nil : JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
         poliprob = JSON.parse(params[:poliprob]) if params[:poliprob]
-        @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).where("fbpac_ads.lang = ?", lang) # ad_texts need lang (or country)
+        @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).includes(writable_ads: [:fbpac_ad, :ad], topics: {}).where("fbpac_ads.lang = ?", lang) # ad_texts need lang (or country)
         if params[:search]
             @ads = @ads.search_for(search).with_pg_search_rank # TODO maybe this should be by date too.
         else
-            @ads.order("coalesce(created_at, creation_date) desc")
+            @ads.order(Arel.sql("coalesce(created_at, creation_date) desc"))
         end
 
         if page_ids.size + advertiser_names.size > 0  # can be either a number or an advertiser
@@ -160,11 +160,12 @@ class AdsController < ApplicationController
             if poliprob.size != 2
                 raise ArgumentError, "poliprob needs to be a JSON array of two numbers"
             end
-            condition = "(fbpac_ads.political_probability > and fbpac_ads.political_probability)"
-            condition += "or ads.archive_id is null" if poliprob[1] < 100
-            @ads = @ads.where(condition,  poliprob[0], poliprob[1])
+            condition = "(fbpac_ads.political_probability >= ? and fbpac_ads.political_probability <= ?) "
+            # I'm not sure how this acts, or how it should act, with real FBAPI data, so I'm going to have to come back to it.
+            # 
+            #
+            @ads = @ads.where(condition,  poliprob[0] / 100.0, poliprob[1] / 100.0)
         end
-                # TODO poliprob. let's do a range this time.
 
 
         if topic_id

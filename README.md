@@ -28,4 +28,6 @@ http://localhost:3000/ads/search.json?search=warren iowa&lang=fr-CA # note that 
 
 http://localhost:3000/ads/search.json?targeting=[[%22MinAge%22,59],%20[%22Interest%22,%20%22Sean%20Hannity%22]]
 
-topic (needs rewrite for topics to attach to ad_texts)
+
+http://localhost:3000/ads/search.json?topic_id=11
+http://localhost:3000/ads/search.json?poliprob=[0,70]
