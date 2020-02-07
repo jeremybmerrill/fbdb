@@ -34,15 +34,17 @@ namespace :text do
   task fbpac_ads: :environment do 
     # eventually this'll be done by the ad catcher, with ATI (but for "collector ads", obvi)
     # writable_ad should be created for EVERY new ad.
-    # TODO: this doesn't handle writable_ads without a text_hash set.
     def create_ad_text(wad)
-        ad_text = AdText.find_or_create_by(text_hash: wad.text_hash)
+        ad_text = AdText.find_or_initialize_by(text_hash: wad.text_hash)
         ad_text.text ||= wad.fbpac_ad.clean_text
         ad_text.search_text ||= wad.fbpac_ad.advertiser.to_s + " " + wad.fbpac_ad.text # TODO: add CTA text, etc.
-        ad_text.save
+        ad_text.save!
         ad_text
     end
-    while new_ads = FbpacAd.left_outer_joins(:writable_ad).where(writable_ads: {ad_id: nil}).limit(1000)
+    counter = 0
+    while (new_ads = FbpacAd.left_outer_joins(:writable_ad).where(writable_ads: {ad_id: nil}).limit(1000)).size > 0
+      counter += 1
+      puts 1000 * counter
       new_ads.each do |ad| 
         wad = WritableAd.new
         wad.fbpac_ad = ad
