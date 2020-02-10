@@ -1,6 +1,7 @@
 class Page < ApplicationRecord
 	self.primary_key = :page_id
 	has_many :ads, primary_key: :page_id
+	has_many :fbpac_ads, primary_key: :advertiser
 	has_one  :writable_page, primary_key: :page_id, foreign_key: :page_id # just a proxy
 	has_many :ad_archive_report_pages, primary_key: :page_id, foreign_key: :page_id
 	def min_spend
@@ -21,7 +22,11 @@ class Page < ApplicationRecord
 	end
 
 	def topic_breakdown
-		breakdown = Hash[*ads.unscope(:order).joins(:ad_topics).joins(:topics).select("topic, sum(coalesce(ad_topics.proportion, cast(1.0 as double precision))) as proportion").group(:topic).map{|a| [a.topic, a.proportion]}.flatten]
+		if ads.count > 1
+			breakdown = Hash[*ads.unscope(:order).joins(writable_ad: [{:ad_text => [{ad_topics: :topic}]}]).select("topic, sum(coalesce(ad_topics.proportion, cast(1.0 as double precision))) as proportion").group(:topic).map{|a| [a.topic, a.proportion]}.flatten]
+		else
+			breakdown = Hash[*fbpac_ads.unscope(:order).joins(writable_ad: [{:ad_text => [{ad_topics: :topic}]}]).select("topic, sum(coalesce(ad_topics.proportion, cast(1.0 as double precision))) as proportion").group(:topic).map{|a| [a.topic, a.proportion]}.flatten]
+		end
 		total = breakdown.values.reduce(&:+)
 		breakdown_proportions = {}
 		breakdown.each do | topic, amt |
