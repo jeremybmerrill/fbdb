@@ -23,7 +23,7 @@ module AtiDashboard
       end
       
       allow do
-        origins 'http://dashboard.qz.ai:8080'
+        origins 'http://dashboard.qz.ai'
         resource '*', headers: :any, methods: [:get]
       end
       allow do
