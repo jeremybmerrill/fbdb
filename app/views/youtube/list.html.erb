@@ -22,8 +22,16 @@
       <% if ad["ad"]["ad_id"] %>
         <b>video: <a href="https://www.youtube.com/watch?v=<%= ad["ad"]["ad_id"] %>">https://www.youtube.com/watch?v=<%= ad["ad"]["ad_id"] %></a> </b><br />
       <% end %>
-      <b>creative:</b> <%= (ad["ad"]['creative'].respond_to?(:join) ? ad["ad"]['creative'].join(" ") : ad["ad"]['creative'] ) || ad["ad"]['dest_url'] %><br />
+      <b>creative:</b> 
+      <% if ad["ad"]['creative'].respond_to?(:join) %>
+        <%= ad["ad"]['creative'].join(" | ") %>
+      <% else %>
+        <img src="<%= ad["ad"]['creative'] %>" />
+      <% end %>
+      <a href="<%= ad["ad"]['dest_url'] %>"><%= ad["ad"]['dest_url'] %></a><br />
       <% if ad["host"] %><b>host: </b><a href='https://www.youtube.com/watch?v=<%= ad["host"]["id"] %>'><%= ad["host"]["title"] %></a> - <%= ad["host"]["author"] %><% end %>
+      <% if ad["when"] %><b>date seen: </b> <%= ad["when"] %><% end %>
+
     </li>
   <% end %>
   </ul>

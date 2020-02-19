@@ -16,7 +16,7 @@
     Ads per political advertiser:
     <ul>
       <% @political_advertisers.sort_by{|advertiser, ads| ads.size }.reverse.each do |advertiser, ads| %>
-      <li><%= ads.size %> - <a href="advertiser/<%= Base64.encode64(advertiser) %>"><%= advertiser %></a></li>
+      <li><%= ads.size %> - <a href="advertiser/<%= Base64.urlsafe_encode64(advertiser) %>"><%= advertiser %></a></li>
       <% end %>
     <ul>
   </div>
@@ -25,7 +25,7 @@
     Political targetings:
     <ul>
       <% @political_targetings.sort_by{|reason, count| count }.reverse.each do |reason, count| %>
-      <li><%= count %> - <a href="targeting/<%= Base64.encode64(reason) %>"><%= reason %></a></li>
+      <li><%= count %> - <a href="targeting/<%= Base64.urlsafe_encode64(reason) %>"><%= reason %></a></li>
       <% end %>
     <ul>
   </div>
@@ -34,7 +34,7 @@
     Ads per advertiser:
     <ul>
       <% @advertisers.sort_by{|advertiser, ads| ads.size }.reverse.each do |advertiser, ads| %>
-      <li><%= ads.size %> - <a href="advertiser_all/<%= Base64.encode64(advertiser) %>"><%= advertiser %></a></li>
+      <li><%= ads.size %> - <a href="advertiser_all/<%= Base64.urlsafe_encode64(advertiser) %>"><%= advertiser %></a></li>
       <% end %>
     <ul>
   </div>
@@ -43,7 +43,7 @@
     targetings:
     <ul>
       <% @targetings.sort_by{|reason, count| count }.reverse.each do |reason, count| %>
-      <li><%= count %> - <a href="targeting_all/<%= Base64.encode64(reason) %>"><%= reason %></a></li>
+      <li><%= count %> - <a href="targeting_all/<%= Base64.urlsafe_encode64(reason) %>"><%= reason %></a></li>
       <% end %>
     <ul>
   </div>

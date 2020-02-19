@@ -76,19 +76,20 @@ class YoutubeController < ApplicationController
   end
 
   def advertiser
-    targ = Base64.decode64(params['targ'])
+    targ = Base64.urlsafe_decode64(params['targ'])
     raw_ad_fragments = @@ads_db.find({"selector" => 
         {"$or" => REASONS_KINDS.map{|kind|
           { "ad.reasons_title" => targ + "\r\n\r\n" + kind  }
         }}
     })["docs"]
     @matching_ads = group_ad_fragments(raw_ad_fragments)
+    puts @matching_ads.inspect
     @query = "Reason: #{targ}"
     render template: "youtube/list"
   end
 
   def targeting
-      targ = Base64.decode64(params['targ'])
+      targ = Base64.urlsafe_decode64(params['targ'])
       raw_ad_fragments = @@ads_db.find({"selector" => 
         {"$and" => [
         { "$nor" => REASONS_KINDS.map{|kind| { "ad.reasons_title" => kind }} },
@@ -105,7 +106,7 @@ class YoutubeController < ApplicationController
   end
 
   def targeting_all
-      targ = Base64.decode64(params['targ'])
+      targ = Base64.urlsafe_decode64(params['targ'])
       raw_ad_fragments = @@ads_db.find({"selector" => 
         { "ad.reasons" => {
           "$elemMatch" => {
@@ -119,7 +120,7 @@ class YoutubeController < ApplicationController
   end
 
   def advertiser_all
-    targ = Base64.decode64(params['targ'])
+    targ = Base64.urlsafe_decode64(params['targ'])
     raw_ad_fragments = @@ads_db.find({"selector" => 
         {"$or" => REASONS_KINDS.map{|kind|
           { "ad.advertiser" => targ  }
