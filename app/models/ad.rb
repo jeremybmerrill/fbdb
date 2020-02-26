@@ -16,7 +16,7 @@ class Ad < ApplicationRecord
       preset_options = {
         include: { page: { only: :page_name },
                    payer:    { only: :name },
-                   topics:   { only: :topic } 
+                   writable_ad: {topics:   { only: :topic }}
         }
       }
       if options[:include].is_a? Symbol

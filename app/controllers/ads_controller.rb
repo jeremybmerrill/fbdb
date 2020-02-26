@@ -49,16 +49,19 @@ class AdsController < ApplicationController
 
     # ed293d9358f9e3ed11b07433fd2e381687dac947 has both fbpac_ads and ads
     def show_by_text
-        @fbpac_ads = FbpacAd.joins(:writable_ad).includes(:writable_ad).where({writable_ads: {text_hash: params[:text_hash]}})
-        @ads  =       Ad.joins(:writable_ad).includes(:writable_ad).includes(:impressions).where({writable_ads: {text_hash: params[:text_hash]}})
+        @ad_text = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).includes(writable_ads: [:fbpac_ad, :ad], topics: {}).find_by(text_hash: params[:text_hash])
 
-        @text = @ads.first&.text || @fbpac_ads&.first&.message
-        @fbpac_ads_count = @fbpac_ads.count
-        @api_ads_count = @ads.count
-        @min_spend = @ads.joins(:impressions).sum(:min_spend)
-        @max_spend = @ads.joins(:impressions).sum(:max_spend)
-        @min_impressions = @ads.joins(:impressions).sum(:min_impressions)
-        @max_impressions = @ads.joins(:impressions).sum(:max_impressions)
+        # @fbpac_ads = FbpacAd.joins(:writable_ad).includes(:writable_ad).where({writable_ads: {text_hash: params[:text_hash]}})
+        # @ad_text  =       Ad.joins(:writable_ad).includes(:writable_ad).includes(:impressions).where({writable_ads: {text_hash: params[:text_hash]}})
+
+
+        @text = @ad_text.ads&.first&.text || @ad_text.fbpac_ads&.first&.message
+        @fbpac_ads_count = @ad_text.fbpac_ads.count
+        @api_ads_count = @ad_text.ads.count
+        @min_spend = @ad_text.impressions.sum(:min_spend)
+        @max_spend = @ad_text.impressions.sum(:max_spend)
+        @min_impressions = @ad_text.impressions.sum(:min_impressions)
+        @max_impressions = @ad_text.impressions.sum(:max_impressions)
 
         #TODO: distinct images/videos (needs ad library scrape, I think)
 
@@ -72,7 +75,7 @@ class AdsController < ApplicationController
             max_spend: @max_spend,
             min_impressions: @min_impressions,
             max_impressions: @max_impressions,
-            ads: @ads.as_json(include: {impressions: {}}) + @fbpac_ads.as_json(include: [:writable_ad]),
+            ad: @ad_text.as_json(include: {writable_ads: {include: [:fbpac_ad, :ad]}}),
             } 
           }
         end
