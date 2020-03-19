@@ -144,7 +144,7 @@ class AdsController < ApplicationController
         if params[:search]
             @ads = @ads.search_for(search).with_pg_search_rank # TODO maybe this should be by date too.
         else
-            @ads.order(Arel.sql("coalesce(created_at, creation_date) desc"))
+            @ads = @ads.order(Arel.sql("coalesce(fbpac_ads.created_at, ads.creation_date) desc"))
         end
 
         if page_ids.size + advertiser_names.size > 0  # can be either a number or an advertiser
@@ -189,7 +189,10 @@ class AdsController < ApplicationController
             @ads = @ads.where("fbpac_ads.targets @> ?",  JSON.dump(targeting.map{|a, b| b ? {target: a.to_s, segment: b.to_s} : {target: a.to_s} }))
         end
 
-        @ads = @ads.distinct.paginate(page: params[:page], per_page: PAGE_SIZE) #.includes(writable_ads: [:fbpac_ad, :ad])
+        # N.B. this is not distinct because SQL complains about 
+        # having the ordering (on date) on something that's been discarded for the ordering.
+        # the join is funny because each text_hash can join to multiple writable_ads (one for fbpac_ad and one for regular ad)
+        @ads = @ads.paginate(page: params[:page], per_page: PAGE_SIZE) #.includes(writable_ads: [:fbpac_ad, :ad])
 
         respond_to do |format|
             format.html 
@@ -204,103 +207,6 @@ class AdsController < ApplicationController
         end
     end
 
-    def search2
-        # keywordsearch: ad text
-        # keywordsearch URL?
-        # some sort of search UTM params
-        # keywordsearch: targeting 
-        
-        # filter: disclaimer, advertiser
-        # keywordsearch disclaimers?
-        # time based filter
-
-        search = params[:search]
-        page_id = params[:page_id]
-        publish_date = params[:publish_date] # "2019-01-01"
-        topic = params[:topic]
-        no_payer = params[:no_payer]
-        lang = params[:lang]
-        targeting = params[:targeting].nil? ? nil : JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
-                        # targeting[][0]=MinAge&targeting[][1]=59&targeting[][0]=Interest&targeting[][1]=Sean Hannity
-                        # targeting[][]=MinAge&targeting[][]=59&targeting[][]=Interest&targeting[][]=Sean Hannity
-        puts targeting.inspect
-        query = Elasticsearch::DSL::Search.search do
-          query do
-            bool do
-              must do
-                query_string do
-                  query search
-                    fields [
-                            :text, :payer_name, :page_name, # Ad
-                            :message, :advertiser, :paid_for_by # FbpacAd
-                        ]
-                end if search
-              end if search
-              filter do
-                range :creation_date do  
-                  gte publish_date 
-                end 
-              end if publish_date
-
-                # TODO: filter by  states seen, impressions minimums/maximums, topics
-                # should this actually search AdTexts, which join to both Ad and FbpacAd?
-
-            # targeting is included via FBPAC. But what do we do about searching ads that don't have an ATIAd counterpart??
-            # TODO: targeting, if we end up getting it.
-            # TODO: this doesn't work with multiple targets
-            targeting&.each do |target, segment|
-                filter do 
-                # term "targets.segment": "59" # works but can't distinguish minage/maxage
-                # term "targets": {"target": "MinAge", "segment": "59"} # error
-                    nested do 
-                        path "targets"
-                        query do 
-                            bool do 
-                                must do 
-                                    term "targets.target": target
-                                end
-                                must do
-                                    term "targets.segment": segment
-                                end if segment
-                            end
-                        end
-                    end
-                end if targeting
-            end
-
-              filter do
-                terms topics: [topic]
-              end if topic
-              filter do
-                term page_id: page_id.to_i 
-              end if page_id
-              filter do
-                term lang: lang
-              end if lang
-              filter do
-                term paid_for_by: FbpacAd::MISSING_STR  # will ONLY return FBPAC ads
-              end if no_payer
-            end
-          end
-          sort do 
-            by :creation_date, 'desc'
-          end
-        end
-        puts query.as_json.inspect
-        @mixed_ads = Elasticsearch::Model.search(query, [Ad, FbpacAd]).paginate(page: params[:page], per_page: PAGE_SIZE).records(includes: :writable_ad)
-        respond_to do |format|
-            format.html 
-            format.json { 
-                render json: {
-                    total_ads: @mixed_ads.total_entries,
-                    n_pages: @mixed_ads.total_pages,
-                    page: params[:page] || 1,
-                    ads: @mixed_ads.as_json(include: :writable_ad),
-                }
-             }
-        end
-    end
-
     def topics
         respond_to do |format|
             format.json {
@@ -310,4 +216,57 @@ class AdsController < ApplicationController
             }
         end
     end
+
+    def list_targets
+        lang = params[:lang] || "en-US" # TODO.
+        raise unless lang.match(/[a-z][a-z]-[A-Z][A-Z]/)
+        counts = Ad.connection.execute("select jsonb_array_elements(targets)->>'target' target,jsonb_array_elements(targets)->>'segment' segment, count(*) from fbpac_ads WHERE lang = 'en-US' AND political_probability > 0.70 AND suppressed = false group by jsonb_array_elements(targets)->>'segment', jsonb_array_elements(targets)->>'target' order by count(*) desc;")
+        grouped = counts.to_a.group_by{|row| row["target"]}.map{|targ, rows| [targ, rows.map{|a| a["segment"] }]}
+        respond_to do |format|
+            format.json {
+                render json: {
+                    grouped: grouped
+                }
+            }
+        end
+    end
+
+    TIME_UNITS = ["day", "week", "month", "year"]
+    PIVOT_SELECTS = {
+        "targets" => "jsonb_array_elements(targets)->>'target'",
+        "segments" => "array[jsonb_array_elements(targets)->>'target', jsonb_array_elements(targets)->>'segment']",
+        "paid_for_by" => "paid_for_by",
+        "advertiser" => "advertiser"
+    }
+    def pivot
+        # time_unit: ["day", "week", "month", "year"]
+        # time_count: integers
+        # kind: "targets" "segments" "paid_for_by" "advertiser"
+        # first_seen: true/false
+        lang = params[:lang] || "en-US" # TODO.
+        time_unit = params[:time_unit]
+        raise if time_unit && !TIME_UNITS.include?(time_unit)
+        time_count = params[:time_count].to_i
+        time_string = "#{time_count} #{time_unit}"
+
+        kind_of_thing = params[:kind]
+        first_seen = params[:first_seen] || false
+
+        ads = FbpacAd.where(lang: lang).where("targets is not null")
+        if (time_count && time_unit)
+            if first_seen
+                ads = ads.having("min(created_at) > NOW() - interval '#{time_string}'")
+            else
+                ads = ads.where("created_at > NOW() - interval '#{time_string}'")
+            end
+        end
+        pivot = ads.unscope(:order).group(PIVOT_SELECTS[kind_of_thing]).order("count_all desc").count
+        respond_to do |format|
+            format.json {
+                render json: pivot #Hash[*pivot.map{|k, v| {paid_for_by: k, count: v} }]
+            }
+        end
+
+    end
+
 end
