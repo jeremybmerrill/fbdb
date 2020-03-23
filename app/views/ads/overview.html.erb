@@ -1,4 +1,4 @@
-<h1>Quartz Political Facebook Ads Dashboard</h1>
+<h1><a href="/">Quartz Political Facebook Ads Dashboard</a></h1>
 
 <p>We have <strong><%= @ads_count.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></strong> ads and <strong><%= @fbpac_ads_count.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></strong> from FBPAC.</p>
 
@@ -42,5 +42,41 @@
 			<li><a href="/interim/youtube/">interim YouTube ad dashboard</a></li>
 			<li><a href="/ads/search.json?&no_payer=true">political ads without a 'Paid for by' disclaimer</a></li>
 		</ul>
+
+		<h4>*New* this week</h4>
+		<ul>
+			<li><a href="/ads/pivot/paid_for_by?time_unit=week&time_count=1&first_seen=1">Paid for by</a></li>
+			<li><a href="/ads/pivot/advertiser?time_unit=week&time_count=1&first_seen=1">Advertisers</a></li>
+			<li><a href="/ads/pivot/segments?time_unit=week&time_count=1&first_seen=1">Targeting segments</a></li>
+		</ul>
+
+		<h4>*New* the past three months</h4>
+		<ul>
+			<li><a href="/ads/pivot/paid_for_by?time_unit=month&time_count=3&first_seen=1">Paid for by</a></li>
+			<li><a href="/ads/pivot/advertiser?time_unit=month&time_count=3&first_seen=1">Advertisers</a></li>
+			<li><a href="/ads/pivot/segments?time_unit=month&time_count=3&first_seen=1">Targeting segments</a></li>
+		</ul>
+
+		<h4>Seen this week</h4>
+		<ul>
+			<li><a href="/ads/pivot/paid_for_by?time_unit=week&time_count=1">Paid for by</a></li>
+			<li><a href="/ads/pivot/advertiser?time_unit=week&time_count=1">Advertisers</a></li>
+			<li><a href="/ads/pivot/segments?time_unit=week&time_count=1">Targeting segments</a></li>
+		</ul>
+
+		<h4>Seen the past three months</h4>
+		<ul>
+			<li><a href="/ads/pivot/paid_for_by?time_unit=month&time_count=3">Paid for by</a></li>
+			<li><a href="/ads/pivot/advertiser?time_unit=month&time_count=3">Advertisers</a></li>
+			<li><a href="/ads/pivot/segments?time_unit=month&time_count=3">Targeting segments</a></li>
+		</ul>
+
+		<h4>Seen ever</h4>
+		<ul>
+			<li><a href="/ads/pivot/paid_for_by">Paid for by</a></li>
+			<li><a href="/ads/pivot/advertiser">Advertisers</a></li>
+			<li><a href="/ads/pivot/segments">Targeting segments</a></li>
+		</ul>
+
 	</div>
 </div>
