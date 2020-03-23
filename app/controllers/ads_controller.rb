@@ -133,11 +133,12 @@ class AdsController < ApplicationController
         search = params[:search]
         lang = params[:lang] || "en-US" # TODO.
         page_ids = params[:page_id] ? [params[:page_id]] : []# TODO support multiple?
-        advertiser_names = [] # TODO.
+        advertiser_names = JSON.parse(params[:advertisers])
         publish_date = params[:publish_date] # e.g. "2019-01-01"
         topic_id = params[:topic_id] # TODO: this isn't supported yet by the frontend, it just sends a topic name
         topic_id = Topic.find_by(topic: params[:topic])&.id if !topic_id && params[:topic]
         no_payer = params[:no_payer]
+        paid_for_by = params[:paid_for_by]
         targeting = params[:targeting].nil? ? nil : JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
         poliprob = JSON.parse(params[:poliprob]) if params[:poliprob]
         @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).includes(writable_ads: [:fbpac_ad, :ad], topics: {}).where("fbpac_ads.lang = ?", lang) # ad_texts need lang (or country)
@@ -154,10 +155,6 @@ class AdsController < ApplicationController
         if publish_date
             @ads = @ads.where("fbpac_ads.created_at > ? or ads.creation_date > ?",  publish_date, publish_date)
         end
-        if publish_date
-            @ads = @ads.where("fbpac_ads.created_at > ? or ads.creation_date > ?",  publish_date, publish_date)
-        end
-
 
         if poliprob
             if poliprob.size != 2
@@ -170,6 +167,9 @@ class AdsController < ApplicationController
             @ads = @ads.where(condition,  poliprob[0] / 100.0, poliprob[1] / 100.0)
         end
 
+        if paid_for_by
+            @ads = @ads.where("fbpac_ads.paid_for_by ilike ? or ads.funding_entity ilike ?",  paid_for_by.downcase, paid_for_by.downcase)
+        end
 
         if topic_id
             puts "topic_id: #{topic_id}"
@@ -244,26 +244,27 @@ class AdsController < ApplicationController
         # kind: "targets" "segments" "paid_for_by" "advertiser"
         # first_seen: true/false
         lang = params[:lang] || "en-US" # TODO.
-        time_unit = params[:time_unit]
-        raise if time_unit && !TIME_UNITS.include?(time_unit)
-        time_count = params[:time_count].to_i
-        time_string = "#{time_count} #{time_unit}"
+        @time_unit = params[:time_unit]
+        raise if @time_unit && !TIME_UNITS.include?(@time_unit)
+        @time_count = params[:time_count].to_i
+        time_string = "#{@time_count} #{@time_unit}"
 
-        kind_of_thing = params[:kind]
-        first_seen = params[:first_seen] || false
+        @kind_of_thing = params[:kind]
+        @first_seen = params[:first_seen] || false
 
         ads = FbpacAd.where(lang: lang).where("targets is not null")
-        if (time_count && time_unit)
-            if first_seen
+        if (@time_count && @time_unit)
+            if @first_seen
                 ads = ads.having("min(created_at) > NOW() - interval '#{time_string}'")
             else
                 ads = ads.where("created_at > NOW() - interval '#{time_string}'")
             end
         end
-        pivot = ads.unscope(:order).group(PIVOT_SELECTS[kind_of_thing]).order("count_all desc").count
+        @pivot = ads.unscope(:order).group(PIVOT_SELECTS[@kind_of_thing]).order("count_all desc").count
         respond_to do |format|
+            format.html
             format.json {
-                render json: pivot #Hash[*pivot.map{|k, v| {paid_for_by: k, count: v} }]
+                render json: @pivot #Hash[*pivot.map{|k, v| {paid_for_by: k, count: v} }]
             }
         end
 
