@@ -133,7 +133,7 @@ class AdsController < ApplicationController
         search = params[:search]
         lang = params[:lang] || "en-US" # TODO.
         page_ids = params[:page_id] ? [params[:page_id]] : []# TODO support multiple?
-        advertiser_names = JSON.parse(params[:advertisers])
+        advertiser_names = params[:advertisers] ? JSON.parse(params[:advertisers])  : []
         publish_date = params[:publish_date] # e.g. "2019-01-01"
         topic_id = params[:topic_id] # TODO: this isn't supported yet by the frontend, it just sends a topic name
         topic_id = Topic.find_by(topic: params[:topic])&.id if !topic_id && params[:topic]

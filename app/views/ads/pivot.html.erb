@@ -1,0 +1,32 @@
+<h1><a href="/">Quartz Political Facebook Ads Dashboard</a></h1>
+
+<h2>top <%= @kind_of_thing %> <%= @first_seen ? "FIRST seen" : "seen"  %> in the past <%= @time_count %> <%= @time_unit %> </h2>
+
+<div id="top-pages-panel">
+  <table>
+    <tbody>
+    <% @pivot.each do |thing, cnt| %>
+      <tr>
+        <td>
+          <% if @kind_of_thing == "segments" %> 
+            <a href="https://dashboard.qz.ai/search?targeting=<%= CGI.escape(JSON.dump([thing])) %>">
+          <% elsif @kind_of_thing == "targets" %> 
+            <a href="https://dashboard.qz.ai/search?targeting=<%= CGI.escape(JSON.dump([[thing, nil]])) %>">          
+          <% elsif @kind_of_thing == "paid_for_by" %> 
+            <% if thing.nil? %>
+              <a href="https://dashboard.qz.ai/search?no_payer=true">
+            <% else %>
+              <a href="https://dashboard.qz.ai/search?paid_for_by=<%= thing %>">
+            <% end %>
+          <% elsif @kind_of_thing == "advertiser" %> 
+            <a href="https://dashboard.qz.ai/advertiser/<%= thing %>">          
+          <% end %>
+            <%= @kind_of_thing == "segments" ? thing.compact.join(" → ") : (thing.nil? ? '(none)' : thing)  %>
+          </a>
+        </td>
+        <td><%= cnt %></td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+</div>
