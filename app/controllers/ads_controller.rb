@@ -231,7 +231,7 @@ class AdsController < ApplicationController
         end
     end
 
-    TIME_UNITS = ["day", "week", "month", "year"]
+    TIME_UNITS = ["day", "week", "month", "year", "electioncycle"]
     PIVOT_SELECTS = {
         "targets" => "jsonb_array_elements(targets)->>'target'",
         "segments" => "array[jsonb_array_elements(targets)->>'target', jsonb_array_elements(targets)->>'segment']",
@@ -239,15 +239,19 @@ class AdsController < ApplicationController
         "advertiser" => "advertiser"
     }
     def pivot
-        # time_unit: ["day", "week", "month", "year"]
+        # time_unit: ["day", "week", "month", "year", "electioncycle"]
         # time_count: integers
         # kind: "targets" "segments" "paid_for_by" "advertiser"
         # first_seen: true/false
-        lang = params[:lang] || "en-US" # TODO.
+        lang = params[:lang] || "en-US"
         @time_unit = params[:time_unit]
         raise if @time_unit && !TIME_UNITS.include?(@time_unit)
         @time_count = params[:time_count].to_i
-        time_string = "#{@time_count} #{@time_unit}"
+        if @time_unit == "electioncycle"
+            time_string = "'2019-11-17'" # after the Louisiana special
+        else
+            time_string = "NOW() - interval '#{@time_count} #{@time_unit}'"
+        end
 
         @kind_of_thing = params[:kind]
         @first_seen = params[:first_seen] || false
@@ -255,9 +259,9 @@ class AdsController < ApplicationController
         ads = FbpacAd.where(lang: lang).where("targets is not null")
         if (@time_count && @time_unit)
             if @first_seen
-                ads = ads.having("min(created_at) > NOW() - interval '#{time_string}'")
+                ads = ads.having("min(created_at) > #{time_string}")
             else
-                ads = ads.where("created_at > NOW() - interval '#{time_string}'")
+                ads = ads.where("created_at > #{time_string}")
             end
         end
         @pivot = ads.unscope(:order).group(PIVOT_SELECTS[@kind_of_thing]).order("count_all desc").count
