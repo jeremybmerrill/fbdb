@@ -56,7 +56,7 @@ class PagesController < ApplicationController
 		end
 	end
 
-	def new_since_about_a_week_ago
+	def bigspenders
 		@big_spenders = BigSpender.preload(:writable_page).preload(:ad_archive_report_page).preload(:page).order("spend_amount desc")
 		respond_to do |format|
 		  format.html

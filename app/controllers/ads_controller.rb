@@ -132,13 +132,13 @@ class AdsController < ApplicationController
     def search
         search = params[:search]
         lang = params[:lang] || "en-US" # TODO.
-        page_ids = params[:page_id] ? [params[:page_id]] : []# TODO support multiple?
+        page_ids = params[:page_id] ? [params[:page_id]] : [] # TODO support multiple? (should be same as paid_for_bys)
         advertiser_names = params[:advertisers] ? JSON.parse(params[:advertisers])  : []
         publish_date = params[:publish_date] # e.g. "2019-01-01"
         topic_id = params[:topic_id] # TODO: this isn't supported yet by the frontend, it just sends a topic name
         topic_id = Topic.find_by(topic: params[:topic])&.id if !topic_id && params[:topic]
         no_payer = params[:no_payer]
-        paid_for_by = params[:paid_for_by]
+        paid_for_by = params[:paid_for_by] # TODO support multiple? (should be same as page_ids)
         targeting = params[:targeting].nil? ? nil : JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
         poliprob = JSON.parse(params[:poliprob]) if params[:poliprob]
         @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).includes(writable_ads: [:fbpac_ad, :ad], topics: {}).where("fbpac_ads.lang = ?", lang) # ad_texts need lang (or country)

@@ -1,7 +1,7 @@
 class PayersController < ApplicationController
 
 	def show
-		@payer = Payer.find(params[:id])
+		@payer = params[:id] ? Payer.find(params[:id]) : Payer.find_by(name: params[:payer_name])
 
 		# count of ads
 		@count_ads = @payer.ads.size
