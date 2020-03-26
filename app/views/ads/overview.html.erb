@@ -18,7 +18,7 @@
 					<td><%= page_name %></td>
 					<td>$<%= amount_spent.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %> </td>
 					<td><a href="https://www.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=US&impression_search_field=has_impressions_lifetime&q=<%= page_name %>">FB ads</a></td>
-					<td><a href="/pages/<%= page_id %>.json">advertiser overview</a></td>
+					<td><a href="https://dashboard.qz.ai/advertiser/<%= page_name %>.json">advertiser overview</a></td>
 				</tr>
 			<% end %>
 		</table>
@@ -31,7 +31,7 @@
 				<tr><td><%= disc == disc.upcase ? disc.titleize : disc %></td>
 					<td>$<%= sum.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %></td>
 				<td><a href="https://www.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=US&impression_search_field=has_impressions_lifetime&q=#{disc}&disclaimer_texts[0]=<%= disc %>">FB ads</a></td>
-				<td><a href="/payers/<%= payer_id %>.json">payer overview</a></td></tr>
+				<td><a href="https://dashboard.qz.ai/payer/<%= disc %>.json">payer overview</a></td></tr>
 			<% end %>
 		</table>
 	</div>

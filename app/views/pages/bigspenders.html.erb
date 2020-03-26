@@ -1,0 +1,27 @@
+<style>
+  h3, h4{
+    display: inline;
+  }
+  .h0 {
+    margin-bottom: 5px;
+  }
+
+</style>
+<h1> Big Spenders </h1>
+
+<p>pages that have spent a lot of money between <%= AdArchiveReport.find(@big_spenders.first.previous_ad_archive_report_id).scrape_date %> and <%= @big_spenders.first.ad_archive_report.scrape_date %>. </p>
+
+<p><b>How to use this page</b>: Check out these advertisers and see if any of them look weird.</p>
+
+<% @big_spenders.each_with_index do |big_spender, idx| %>
+
+	<div>
+		<div class="h0"><h3><%= big_spender.is_new ? "🚨NEW! " : '' %><%= big_spender.ad_archive_report_page.page_name %> <span class="overview"></h3><a href="https://dashboard.qz.ai/advertiser/<%= big_spender.ad_archive_report_page.page_name %>">(overview)</a></span></div>
+		<div class="h0"><h4>Paid for by <%= big_spender.ad_archive_report_page.disclaimer %> </h4><span class="overview"><a href="https://dashboard.qz.ai/payer/<%= big_spender.ad_archive_report_page.disclaimer %>">(overview)</a></span></div>
+		<p>$<%= big_spender.spend_amount.to_s.reverse.scan(/\d{3}|.+/).join(",").reverse %> spent in <%= big_spender.duration_days %> days (<a href="<%= big_spender.ad_archive_report_page.ad_library_url %>">Ads on FB</a>)</p>
+
+		<%= text_area_tag idx.to_s + "-notes", big_spender.writable_page&.notes, cols: 60, rows: 6, class: "onkeyupdelay", data: {page_id: big_spender.page_id, disclaimer: big_spender.ad_archive_report_page.disclaimer} %>
+	</div>
+<% end %>
+
+

@@ -16,7 +16,7 @@
             <% if thing.nil? %>
               <a href="https://dashboard.qz.ai/search?no_payer=true">
             <% else %>
-              <a href="https://dashboard.qz.ai/search?paid_for_by=<%= thing %>">
+              <a href="https://dashboard.qz.ai/payer/<%= thing %>">
             <% end %>
           <% elsif @kind_of_thing == "advertiser" %> 
             <a href="https://dashboard.qz.ai/advertiser/<%= thing %>">          
