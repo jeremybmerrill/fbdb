@@ -1,0 +1,13 @@
+<h2>All users</h2>
+
+<table>
+  <% @users.each do |user| %>
+    <tr>
+      <td><%= user.email %></td>
+      <td><%= button_to "delete", delete_other_user_path(user.id), method: :delete, data: { confirm: 'Are you sure?' } %> </td>
+    </tr>
+    <% end %>
+</table>
+
+<a href="/other_users/new">create new user</a> 
+<%= render "users/shared/links" %>

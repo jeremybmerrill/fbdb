@@ -4,6 +4,14 @@ Rails.application.routes.draw do
   #   sessions: 'users/sessions'
   # }
 
+  devise_scope :user do
+    get "users", to: "users/registrations#index"
+    get "other_users/new", to: "users/registrations#sign_up_other_user"
+    post "other_users/create", to: "users/registrations#create_other_user"
+    delete "other_users/:user_id", to: "users/registrations#delete_other_user", as: "delete_other_user"
+  end
+
+
 
   get 'writable_pages/update'
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
