@@ -1,9 +1,5 @@
 Rails.application.routes.draw do
   devise_for :users
-  # , controllers: {
-  #   sessions: 'users/sessions'
-  # }
-
   devise_scope :user do
     get "users", to: "users/registrations#index"
     get "other_users/new", to: "users/registrations#sign_up_other_user"
@@ -13,8 +9,6 @@ Rails.application.routes.draw do
 
 
 
-  get 'writable_pages/update'
-  # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
 
   root to: "ads#overview"
 
@@ -27,7 +21,7 @@ Rails.application.routes.draw do
   get "pages/:id", to: "pages#show"
   get "pages_by_name/:page_name", to: "pages#show", :page_name => /[^\/]+(?=\.html\z|\.json\z)|[^\/]+/
 
-
+  get 'writable_pages/update'
   put "writable_pages/:page_id", to: 'writable_pages#update'
   get "topics", to: "ads#topics"
 
@@ -49,4 +43,14 @@ Rails.application.routes.draw do
   get 'interim/youtube/targeting/:targ', to: "youtube#targeting"
   get 'interim/youtube/targeting_all/:targ', to: "youtube#targeting_all"
   get 'interim/youtube/advertiser_all/:targ', to: "youtube#advertiser_all"
+
+  scope "pp" do
+    get "ads", to: "fbpac_ads#index"
+    get "ads/:id", to: "fbpac_ads#show" # okay
+    get "persona", to: "fbpac_ads#persona"
+    get "homepage_stats", to: "fbpac_ads#homepage_stats"
+    get "write_homepage_stats", to: "fbpac_ads#write_homepage_stats"
+  end
+
+
 end
