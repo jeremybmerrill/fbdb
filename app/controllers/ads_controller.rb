@@ -140,12 +140,12 @@ class AdsController < ApplicationController
         no_payer = params[:no_payer]
         paid_for_by = params[:paid_for_by] # TODO support multiple? (should be same as page_ids)
         targeting = params[:targeting].nil? ? nil : JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
-        poliprob = JSON.parse(params[:poliprob]) if params[:poliprob]
+        poliprob =  params[:poliprob] ? JSON.parse(params[:poliprob]) : [70, 100]
         @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).includes(writable_ads: [:fbpac_ad, :ad], topics: {}).where("fbpac_ads.lang = ?", lang) # ad_texts need lang (or country)
         if params[:search]
             @ads = @ads.search_for(search).with_pg_search_rank # TODO maybe this should be by date too.
         else
-            @ads = @ads.order(Arel.sql("coalesce(fbpac_ads.created_at, ads.creation_date) desc"))
+            @ads = @ads.order(Arel.sql("coalesce(fbpac_ads.created_at, ads.ad_creation_time) desc"))
         end
 
         if page_ids.size + advertiser_names.size > 0  # can be either a number or an advertiser
@@ -153,19 +153,17 @@ class AdsController < ApplicationController
         end
 
         if publish_date
-            @ads = @ads.where("fbpac_ads.created_at > ? or ads.creation_date > ?",  publish_date, publish_date)
+            @ads = @ads.where("fbpac_ads.created_at > ? or ads.ad_creation_time > ?",  publish_date, publish_date)
         end
 
-        if poliprob
-            if poliprob.size != 2
-                raise ArgumentError, "poliprob needs to be a JSON array of two numbers"
-            end
-            condition = "(fbpac_ads.political_probability >= ? and fbpac_ads.political_probability <= ?) "
-            # I'm not sure how this acts, or how it should act, with real FBAPI data, so I'm going to have to come back to it.
-            # 
-            #
-            @ads = @ads.where(condition,  poliprob[0] / 100.0, poliprob[1] / 100.0)
+        if poliprob.size != 2
+            raise ArgumentError, "poliprob needs to be a JSON array of two numbers"
         end
+        condition = "(fbpac_ads.political_probability >= ? and fbpac_ads.political_probability <= ?) or ads.archive_id is not null"
+        # I'm not sure how this acts, or how it should act, with real FBAPI data, so I'm going to have to come back to it.
+        # 
+        #
+        @ads = @ads.where(condition, poliprob[0] / 100.0, poliprob[1] / 100.0)
 
         if paid_for_by
             @ads = @ads.where("fbpac_ads.paid_for_by ilike ? or ads.funding_entity ilike ?",  paid_for_by.downcase, paid_for_by.downcase)

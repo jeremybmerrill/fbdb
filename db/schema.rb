@@ -63,7 +63,7 @@ ActiveRecord::Schema.define(version: 2020_02_05_183726) do
     t.text "text"
     t.datetime "start_date", precision: 4
     t.datetime "end_date", precision: 4
-    t.datetime "creation_date", precision: 4
+    t.datetime "ad_creation_time", precision: 4
     t.bigint "page_id"
     t.string "currency", limit: 255
     t.string "snapshot_url"

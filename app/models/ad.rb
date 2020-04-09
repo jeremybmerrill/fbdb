@@ -51,7 +51,9 @@ class Ad < ApplicationRecord
     #   }.update(options)
     #   super(options)
     # end
-
+    def text
+      [ad_creative_body, ad_creative_link_caption, ad_creative_link_title, ad_creative_link_description].join(' ')
+    end
 
     def clean_text
       text.strip.downcase.gsub(/\s+/, ' ').gsub(/[^a-z 0-9]/, '')
