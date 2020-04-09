@@ -60,20 +60,20 @@ ActiveRecord::Schema.define(version: 2020_02_05_183726) do
   end
 
   create_table "ads", id: false, force: :cascade do |t|
-    t.text "text"
-    t.datetime "start_date", precision: 4
-    t.datetime "end_date", precision: 4
+    t.text "ad_creative_body"
+    t.datetime "ad_delivery_start_time", precision: 4
+    t.datetime "ad_delivery_stop_time", precision: 4
     t.datetime "ad_creation_time", precision: 4
     t.bigint "page_id"
     t.string "currency", limit: 255
-    t.string "snapshot_url"
+    t.string "ad_snapshot_url"
     t.boolean "is_active"
     t.integer "ad_sponsor_id"
     t.bigint "archive_id", null: false
     t.bigserial "nyu_id", null: false
-    t.string "link_caption"
-    t.string "link_description"
-    t.string "link_title"
+    t.string "ad_creative_link_caption"
+    t.string "ad_creative_link_description"
+    t.string "ad_creative_link_title"
     t.integer "ad_category_id"
     t.bigint "ad_id"
     t.string "country_code"
