@@ -45,13 +45,36 @@ class AdText < ApplicationRecord
   #       json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
 
   #       # json ad.
-  #       json["creation_date"] = json.delete("created_at")
+  #       json["ad_creation_time"] = json.delete("created_at")
   #       json["text"] = json.delete("message") # TODO: remove HTML tags
   #       json["funding_entity"] = json["paid_for_by"]
   #       # what if page_id doesn't exist?!
   # #      json["page_id"] 
   #       json["start_date"] = json.delete("created_at")
       # end
+  end
+
+    # topics.each do |topic|
+    #   t = Topic.find_or_create_by(topic: topic)
+    # end
+    # Ad.all.each do |ad|
+    #   unless ad.writable_ad
+    #     wa = WritableAd.new
+    #     ad.writable_ad = wa
+    #     wa.save
+    #   end
+    #   ad.topics << Topic.find_by(topic: topics.sample)
+    # end
+
+
+  def self.classify_topic(ad_texts)
+    puts ad_texts.map(&:text).inspect
+    res_json = RestClient.post(ENV["TOPICS_URL"] + "/topics", {'texts' => ad_texts.map(&:text)}.to_json, {content_type: :json, accept: :json})
+    res = JSON.parse(res_json)
+    puts res.inspect
+    ad_texts.zip(res).each do |ad_text, topics|
+      ad_text.topics = topics.map{|t|  Topic.find_or_create_by(topic: t)}
+    end
   end
 end
 

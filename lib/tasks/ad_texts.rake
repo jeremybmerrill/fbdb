@@ -23,7 +23,7 @@ namespace :text do
     (new_ads.map{|ad| wad = WritableAd.new;  wad.ad = ad; wad} + ads_without_text_hash).each do |wad|
       wad.text_hash = Digest::SHA1.hexdigest(wad.ad.clean_text)
       ad_text = AdText.find_or_create_by(text_hash: wad.text_hash)
-      ad_text.text ||= wad.ad.clean_text
+      ad_text.text ||= wad.ad.text
       ad_text.search_text ||= wad.ad.page.page_name + " " + wad.ad.text # TODO: add CTA text, etc.
       ad_text.save
       wad.ad_text = ad_text
@@ -36,7 +36,7 @@ namespace :text do
     # writable_ad should be created for EVERY new ad.
     def create_ad_text(wad)
         ad_text = AdText.find_or_initialize_by(text_hash: wad.text_hash)
-        ad_text.text ||= wad.fbpac_ad.clean_text
+        ad_text.text ||= wad.fbpac_ad.text
         ad_text.search_text ||= wad.fbpac_ad.advertiser.to_s + " " + wad.fbpac_ad.text # TODO: add CTA text, etc.
         ad_text.save!
         ad_text
