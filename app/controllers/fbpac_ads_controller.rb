@@ -163,4 +163,89 @@ class FbpacAdsController < ApplicationController
         end
     end
 
+
+    POLITICAL_BUCKETS = {
+    "liberal" => {
+        segment: [
+            "US politics (liberal)",  # segment
+            "Likely to engage with political content (liberal)",  # segment
+            "US politics (very liberal)",  # segment
+        ],
+        interest: [
+            "Democratic Party (United States)",
+            "Bernie Sanders",
+            "Barack Obama",
+            "Environmentalism",
+            "Planned Parenthood",
+            "Elizabeth Warren",
+            "The People For Bernie Sanders",
+            "The Young Turks",
+            "MoveOn.org",
+            "NPR",
+            "Feminism",
+            "Black Lives Matter",
+            "Social justice",
+            "Kamala Harris",
+            "Hillary Clinton",
+            "The New York Times",
+            "Woke Folks",
+            "Left-wing politics",
+            "Climate change",
+            "DREAM Act",
+            "EMILY's List",
+            "Mother Jones (magazine)",
+        ]
+    },
+    "apolitical" => {
+        segment: [
+            "US politics (moderate)",
+            "Likely to engage with political content (moderate)",
+        ],
+        interest: [
+            "Politics and social issues",
+            "Politics",
+            "Education",
+            "Community issues",
+            "Higher education",
+            "Charity and causes",
+            "Nonprofit organization",
+            "Current events",
+            "Nature",
+            "Natural environment",
+            "Environmental science",
+            "Federal government of the United States",
+            "National Park Service",
+            "Mountains",
+            "Business",
+            "Fitness and wellness",
+            "Family",
+            "Volunteering",
+            "Health system",
+            "Medicare (United States)",
+            "Technology",
+            "Teacher",
+            "Local government",
+            "Family and relationships",
+            "Supreme Court of the United States",
+            "Business and industry",
+            "Health care"
+
+        ]
+    },
+    "conservative" => {
+        segment: [
+            "Likely to engage with political content (conservative)",
+            "US politics (conservative)",
+            "US politics (very conservative)",
+        ],
+        interest: [
+            "Republican Party (United States)",
+            "Ted Cruz",
+            "Donald Trump",
+            "Fox News Channel",
+            "National Rifle Association"
+        ]
+    }
+    }    
+
 end

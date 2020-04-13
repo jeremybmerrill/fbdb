@@ -41,10 +41,10 @@ class FbpacAd < ApplicationRecord
 
   USERS_COUNT = 2442 + 5420
   def self.calculate_homepage_stats(lang) # internal only!
-      political_ads_count = FbpacAd.where(lang: lang).count
-      political_ads_today = FbpacAd.where(lang: lang).unscope(:order).where("created_at AT TIME ZONE 'America/New_York' > now() - interval '1 day' ").count
-      starting_count = 14916
-      cumulative_political_ads_per_week = FbpacAd.unscope(:order).where(lang: lang).where("created_at AT TIME ZONE 'America/New_York' > '2019-11-01' ").group("date_trunc('week', created_at AT TIME ZONE 'America/New_York')").select("count(*) as total, date_trunc('week', created_at AT TIME ZONE 'America/New_York') as week").sort_by{|ad| ad.week}.reduce([]){|memo, ad| memo << [ad.week, (memo.last ? memo.last[1] : starting_count) + ad.total]; memo}
+      political_ads_count = FbpacAd.where(lang: lang).where("political_probability > 0.70").count
+      political_ads_today = FbpacAd.where(lang: lang).where("political_probability > 0.70").unscope(:order).where("created_at AT TIME ZONE 'America/New_York' > now() - interval '1 day' ").count
+      starting_count = 187378 # select count(*) from fbpac_ads where created_at AT TIME ZONE 'America/New_York' <= '2020-01-01' and political_probability > 0.7 and suppressed = false and lang = 'en-US';
+      cumulative_political_ads_per_week = FbpacAd.unscope(:order).where(lang: lang).where("political_probability > 0.70").where("created_at AT TIME ZONE 'America/New_York' > '2020-01-01'").group("date_trunc('week', created_at AT TIME ZONE 'America/New_York')").select("count(*) as total, date_trunc('week', created_at AT TIME ZONE 'America/New_York') as week").sort_by{|ad| ad.week}.reduce([]){|memo, ad| memo << [ad.week, (memo.last ? memo.last[1] : starting_count) + ad.total]; memo}
 
       {
           user_count: USERS_COUNT,
