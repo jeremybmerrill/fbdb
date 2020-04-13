@@ -9,5 +9,10 @@ namespace :topics do
     ads.each_slice(64) do |texts|
       AdText.classify_topic(texts)
     end
+    RestClient.post(
+        ENV["SLACKWH"],
+        JSON.dump({"text" => "Facebook ad topic classification went swimmingly. (#{counter} batches processed)" }),
+        {:content_type => "application/json"}
+    ) if counter > 0
   end
 end
