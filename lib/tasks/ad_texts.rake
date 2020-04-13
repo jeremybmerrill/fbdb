@@ -20,15 +20,25 @@ namespace :text do
     new_ads = Ad.left_outer_joins(:writable_ad).where(writable_ads: {archive_id: nil})# ads that don't have a writable ad or whose writable ad doesn't have a text hash in it
     ads_without_text_hash = WritableAd.where("text_hash is null and archive_id is not null")
 
+    ads_hashed = 0
+
     (new_ads.map{|ad| wad = WritableAd.new;  wad.ad = ad; wad} + ads_without_text_hash).each do |wad|
       wad.text_hash = Digest::SHA1.hexdigest(wad.ad.clean_text)
       ad_text = AdText.find_or_create_by(text_hash: wad.text_hash)
       ad_text.text ||= wad.ad.text
       ad_text.search_text ||= wad.ad.page.page_name + " " + wad.ad.text # TODO: add CTA text, etc.
       ad_text.save
+      ads_hashed += 1
       wad.ad_text = ad_text
       wad.save
     end
+    RestClient.post(
+        ENV["SLACKWH"],
+        JSON.dump({"text" => "text hashing for FB API ads went swimmingly. (#{ads_hashed} ads hashed)" }),
+        {:content_type => "application/json"}
+    ) if ads_hashed > 0
+
+
   end
 
   task fbpac_ads: :environment do 
@@ -59,6 +69,11 @@ namespace :text do
         wad.ad_text = create_ad_text(wad)
         wad.save!
     end
+    RestClient.post(
+        ENV["SLACKWH"],
+        JSON.dump({"text" => "text hashing for collector ads went swimmingly. (#{counter} batches processed)" }),
+        {:content_type => "application/json"}
+    ) if counter > 0
 
 
   end  
