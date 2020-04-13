@@ -1,13 +1,12 @@
-
-
 class FbpacAdsController < ApplicationController
     before_action :set_lang
+    skip_before_action :authenticate_user!
 
     GENDERS_FB = ["men", "women"]
     MAX_PAGE = 50
     def persona
         @lang = "en-US"
-        ads = FbpacAd.where(lang: @lang)
+        ads = FbpacAd.where(lang: @lang).where("political_probability > 0.7 and suppressed = false")
 
         ads = ads.unscope(:order)
         ads = ads.order("(CURRENT_DATE - created_at) / sqrt(greatest(targetedness, 1)) asc " )
@@ -95,17 +94,14 @@ class FbpacAdsController < ApplicationController
         ads_page = ads.page(page_num + 1)  # +1 here to mimic Rust behavior.
         resp = {}
 
-        resp[:ads] = ads_page.as_json()
+        resp[:ads] = ads_page.map(&:as_propublica_json)
         resp[:total] = ads.count
         render json: resp
     end
 
     def show
-        # the frontend does not prevent us from requesting ads in languages other than en-US and de for the show endpoint.
-        # so here we'll just refuse to return the JSON
-        # unless it's en-US or de OR if you'er logged in.
-        ad = FbpacAd.select(ADS_COLUMNS).find_by(lang: ["en-US", "de-DE"], id: params[:id])
-        render json: ad.as_json(:except => [:suppressed])
+        ad = FbpacAd.where("political_probability > 0.7 and suppressed = false").select(ADS_COLUMNS).find_by(lang: ["en-US", "de-DE"], id: params[:id])
+        render json: ad.as_propublica_json(:except => [:suppressed])
     end
 
 
@@ -131,7 +127,7 @@ class FbpacAdsController < ApplicationController
     def index
         expires_in(1.hours, public: true, must_revalidate: true)
 
-        ads = FbpacAd.where(lang: @lang).order("fbpac_ads.created_at desc")
+        ads = FbpacAd.where(lang: @lang).where("political_probability > 0.7 and suppressed = false").order("fbpac_ads.created_at desc")
 
         if params[:search]
             # to_englishtsvector("ads"."html") @@ to_englishtsquery($4)
@@ -150,7 +146,7 @@ class FbpacAdsController < ApplicationController
 
         resp = {}
 
-        resp[:ads] = ads_page.select( *(ADS_COLUMNS)).as_json(:except => [:suppressed])
+        resp[:ads] = ads_page.select( *(ADS_COLUMNS)).map(&:as_propublica_json)
         resp[:targets] = ads.unscope(:order).where("targets is not null").group("jsonb_array_elements(targets)->>'target'").order("count_all desc").limit(20).count.map{|k, v| {target: k, count: v} }
         resp[:entities] = ads.unscope(:order).where("entities is not null").group("jsonb_array_elements(entities)->>'entity'").order("count_all desc").limit(20).count.map{|k, v| {entity: k, count: v} }
         resp[:advertisers] = ads.unscope(:order).where("advertiser is not null").group("advertiser").order("count_all desc").limit(20).count.map{|k, v| {advertiser: k, count: v} }

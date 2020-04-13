@@ -15,7 +15,7 @@ module AtiDashboard
     config.middleware.insert_before 0, Rack::Cors do
       allow do
         origins 'http://localhost:3000'
-        resource '*', headers: :any, methods: [:get]
+        resource '*', headers: :any, methods: [:get], credentials: true
       end
       allow do
         origins 'http://pol-ad-dashboard.s3-website.us-east-2.amazonaws.com'
@@ -29,6 +29,11 @@ module AtiDashboard
       allow do
         origins 'https://dashboard-frontend.qz.ai'
         resource '*', headers: :any, methods: [:get]
+      end
+
+      allow do
+        origins 'https://projects.propublica.org'
+        resource '/pp/*', headers: :any, methods: [:get], credentials: true
       end
     end
     # Settings in config/environments/* take precedence over those specified here.

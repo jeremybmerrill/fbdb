@@ -3,6 +3,10 @@ class FbpacAd < ApplicationRecord
 
   belongs_to :writable_ad, primary_key: :ad_id, foreign_key: :id
 
+  alias_method :as_propublica_json, :as_json
+
+
+  # THIS DOES NOT IN FACT GET CALLED
   def as_json(options={})
     # translating this schema to match the FB one as much as possible
     super.tap do |json|
@@ -15,6 +19,7 @@ class FbpacAd < ApplicationRecord
       json = json.merge(json)
     end
   end
+
 
 
 #   MISSING_STR = "missingpaidforby"
@@ -39,7 +44,7 @@ class FbpacAd < ApplicationRecord
       political_ads_count = FbpacAd.where(lang: lang).count
       political_ads_today = FbpacAd.where(lang: lang).unscope(:order).where("created_at AT TIME ZONE 'America/New_York' > now() - interval '1 day' ").count
       starting_count = 14916
-      cumulative_political_ads_per_week = FbpacAd.unscope(:order).where(lang: lang).where("created_at AT TIME ZONE 'America/New_York' > '2019-11-01' ").group("extract(week from created_at AT TIME ZONE 'America/New_York'), extract(year from created_at AT TIME ZONE 'America/New_York')").select("count(*) as total, extract(week from created_at AT TIME ZONE 'America/New_York') as week, extract(year from created_at AT TIME ZONE 'America/New_York') as year").sort_by{|ad| ad.year.to_s + ad.week.to_i.to_s.rjust(3, '0') }.reduce([]){|memo, ad| memo << [ad.week, (memo.last ? memo.last[1] : starting_count) + ad.total]; memo}
+      cumulative_political_ads_per_week = FbpacAd.unscope(:order).where(lang: lang).where("created_at AT TIME ZONE 'America/New_York' > '2019-11-01' ").group("date_trunc('week', created_at AT TIME ZONE 'America/New_York')").select("count(*) as total, date_trunc('week', created_at AT TIME ZONE 'America/New_York') as week").sort_by{|ad| ad.week}.reduce([]){|memo, ad| memo << [ad.week, (memo.last ? memo.last[1] : starting_count) + ad.total]; memo}
 
       {
           user_count: USERS_COUNT,

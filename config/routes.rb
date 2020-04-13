@@ -46,10 +46,10 @@ Rails.application.routes.draw do
 
   scope "pp" do
     get "ads", to: "fbpac_ads#index"
+    get "ads/homepage_stats", to: "fbpac_ads#homepage_stats"
+    get "ads/write_homepage_stats", to: "fbpac_ads#write_homepage_stats"
     get "ads/:id", to: "fbpac_ads#show" # okay
     get "persona", to: "fbpac_ads#persona"
-    get "homepage_stats", to: "fbpac_ads#homepage_stats"
-    get "write_homepage_stats", to: "fbpac_ads#write_homepage_stats"
   end
 
 
