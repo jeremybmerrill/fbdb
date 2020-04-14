@@ -52,7 +52,7 @@ namespace :text do
         ad_text
     end
     counter = 0
-    while (new_ads = FbpacAd.where("political_probability > 0.7").left_outer_joins(:writable_ad).where(writable_ads: {ad_id: nil}).limit(1000)).size > 0
+    while (new_ads = FbpacAd.left_outer_joins(:writable_ad).where(writable_ads: {ad_id: nil}).limit(1000)).size > 0
       counter += 1
       puts 1000 * counter
       new_ads.each do |ad| 
