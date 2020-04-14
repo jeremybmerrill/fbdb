@@ -2,7 +2,7 @@ class FbpacAd < ApplicationRecord
 #   belongs_to :ad, primary_key: :ad_id, foreign_key: :id # doesn't work anymore :(
 
   belongs_to :writable_ad, primary_key: :ad_id, foreign_key: :id
-
+  delegate :ad_text, :to => :writable_ad, :allow_nil => true
   alias_method :as_propublica_json, :as_json
 
 

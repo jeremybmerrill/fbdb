@@ -30,19 +30,25 @@ end
 class AdsController < ApplicationController
     PAGE_SIZE = 30
 
+    # this should redirect to the show_by_text
+    #   so that from an FB ad ID, we can get to the show_by_text.
     def show
         if params[:archive_id]
             @some_kind_of_ad = Ad.find_by(archive_id: params[:archive_id]) 
         elsif params[:ad_id]
-            @some_kind_of_ad = FbpacAd.find(ad_id: params[:ad_id])
+            @some_kind_of_ad = FbpacAd.find_by(id: params[:ad_id])
         end
 
-        @writable_ad = @some_kind_of_ad.writable_ad
+        raise ActiveRecord::RecordNotFound if @some_kind_of_ad.nil?
+
+        ad_text = @some_kind_of_ad.ad_text
 
         respond_to do |format|
-          format.html
+          format.html {
+            redirect_to "https://dashboard.qz.ai/ad/#{ad_text.text_hash}"
+          }
           format.json { render json: {
-            ad: @some_kind_of_ad.as_json(include: [:writable_ad, :topics])
+            ad_text: ad_text
           } }
         end
     end
@@ -190,7 +196,7 @@ class AdsController < ApplicationController
         # N.B. this is not distinct because SQL complains about 
         # having the ordering (on date) on something that's been discarded for the ordering.
         # the join is funny because each text_hash can join to multiple writable_ads (one for fbpac_ad and one for regular ad)
-        @ads = @ads.paginate(page: params[:page], per_page: PAGE_SIZE) #.includes(writable_ads: [:fbpac_ad, :ad])
+        @ads = @ads.paginate(page: params[:page], per_page: PAGE_SIZE, total_entries: AdText.size) #.includes(writable_ads: [:fbpac_ad, :ad])
 
         respond_to do |format|
             format.html 
