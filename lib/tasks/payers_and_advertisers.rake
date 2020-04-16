@@ -20,7 +20,7 @@ namespace :denormalize do
         ENV["SLACKWH"],
         JSON.dump({"text" => "Facebook payer-denormalization went swimmingly. (#{payers_created} created)" }),
         {:content_type => "application/json"}
-    ) if payers_created > 0
+    )
 
   end
 
