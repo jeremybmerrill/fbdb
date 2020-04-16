@@ -10,7 +10,8 @@ class Payer < ApplicationRecord
 	end
 
 	def advertisers
-		Page.where(page_id: ads.unscope(:order).select("distinct page_id"))
+		# Page.where(page_id: ads.unscope(:order).select("distinct page_id")) # this is very slow.
+		AdArchiveReport.where(kind: "lifelong").last.ad_archive_report_pages.where(disclaimer: 'BIDEN FOR PRESIDENT').map(&:page)
 	end
 
 	# def advertiser_spend 

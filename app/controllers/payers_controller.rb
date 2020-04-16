@@ -13,7 +13,7 @@ class PayersController < ApplicationController
 		@advertisers = @payer.advertisers
 
 		# sum of spend for all advertisers
-		@min_spend = @payer.min_spend
+		# @min_spend = @payer.min_spend # removed because precise_spend is better
 
 		aarps = @payer.ad_archive_report_pages.where(ad_archive_report: AdArchiveReport.order(:scrape_date).last)
 		@precise_spend = aarps.sum(:amount_spent)
@@ -45,7 +45,7 @@ class PayersController < ApplicationController
 		    advertisers: @advertisers,
 
 		    min_impressions: @min_impressions,
-		    min_spend: @min_spend,
+		    # min_spend: @min_spend,
 		    precise_spend: @precise_spend,
 		    topics: @topics,
 		    targetings: @targetings

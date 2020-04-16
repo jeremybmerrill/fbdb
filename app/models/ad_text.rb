@@ -47,7 +47,9 @@ class AdText < ApplicationRecord
     res = JSON.parse(res_json)
 
     ad_texts.zip(res).each do |ad_text, topics|
-      puts [ad_text.text, topics].inspect
+      if topics.size == 0
+        topics << "none"
+      end
       ad_text.topics = topics.map{|t|  Topic.find_or_create_by(topic: t)}
     end
   end

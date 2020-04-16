@@ -38,6 +38,16 @@ class FbpacAd < ApplicationRecord
     text.downcase.gsub(/\s+/, ' ').gsub(/[^a-z 0-9]/, '')
   end
 
+  TARGETS_MAPPING = {
+    # List => “You’re on a list” 
+    # Activity on the Facebook Family => “Activity on Facebook”
+    # Retargeting => “You're similar to another group”
+
+  }
+  def self.correct_targets(targets_arr)
+
+  end
+
 
   USERS_COUNT = 2442 + 5420
   def self.calculate_homepage_stats(lang) # internal only!
