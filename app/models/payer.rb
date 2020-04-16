@@ -20,8 +20,7 @@ class Payer < ApplicationRecord
 
 	def min_impressions
 		#ads.joins(:impressions).group(:ad_archive_id).max(:crawl_date).sum(:min_impressions)
-		puts "needs to limit to just the most recent in each group"
-		ads.joins(:impressions).group(:archive_id).sum(:min_impressions).values.reduce(&:+)
+		ads.joins(:impressions).sum(:min_impressions)
 	end
 
 	# TODO should go in a mixin.
