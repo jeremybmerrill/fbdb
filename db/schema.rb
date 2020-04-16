@@ -100,17 +100,22 @@ ActiveRecord::Schema.define(version: 2020_02_05_183726) do
   end
 
   create_table "demo_impressions", id: false, force: :cascade do |t|
-    t.bigint "ad_archive_id"
+    t.bigint "archive_id"
+    t.integer "demo_id"
+    t.float "spend_percentage"
+    t.index ["archive_id", "demo_id"], name: "demo_impressions_unique_archive_id", unique: true
+    t.index ["archive_id"], name: "demo_impressions_archive_id_idx"
+  end
+
+  create_table "demo_impression_results", id: false, force: :cascade do |t|
+    t.bigint "archive_id"
     t.integer "demo_id"
     t.integer "min_impressions"
     t.integer "max_impressions"
     t.integer "min_spend"
     t.integer "max_spend"
-    t.date "crawl_date"
-    t.boolean "most_recent"
-    t.bigint "nyu_id", default: -> { "nextval('demo_impressions_nyu_id1_seq'::regclass)" }, null: false
-    t.index ["ad_archive_id", "demo_id"], name: "demo_impressions_unique_ad_archive_id", unique: true
-    t.index ["ad_archive_id"], name: "demo_impressions_archive_id_idx"
+    t.index ["archive_id", "demo_id"], name: "demo_impressions_unique_archive_id", unique: true
+    t.index ["archive_id"], name: "demo_impressions_archive_id_idx"
   end
 
   create_table "fbpac_ads", id: :text, force: :cascade do |t|
@@ -175,17 +180,23 @@ ActiveRecord::Schema.define(version: 2020_02_05_183726) do
   end
 
   create_table "region_impressions", id: false, force: :cascade do |t|
-    t.bigint "ad_archive_id"
+    t.bigint "archive_id"
     t.integer "region_id"
     t.integer "min_impressions"
     t.integer "min_spend"
     t.integer "max_impressions"
     t.integer "max_spend"
-    t.date "crawl_date"
-    t.boolean "most_recent"
     t.bigint "nyu_id", default: -> { "nextval('region_impressions_nyu_id1_seq'::regclass)" }, null: false
-    t.index ["ad_archive_id", "region_id"], name: "region_impressions_unique_ad_archive_id", unique: true
-    t.index ["ad_archive_id"], name: "region_impressions_archive_id_idx"
+    t.index ["archive_id", "region_id"], name: "region_impressions_unique_archive_id", unique: true
+    t.index ["archive_id"], name: "region_impressions_archive_id_idx"
+  end
+
+  create_table "region_impression_results", id: false, force: :cascade do |t|
+    t.bigint "archive_id"
+    t.integer "region_id"
+    t.float "spend_percentage"
+    t.index ["archive_id", "region_id"], name: "region_impressions_unique_archive_id", unique: true
+    t.index ["archive_id"], name: "region_impressions_archive_id_idx"
   end
 
   create_table "regions", id: :serial, force: :cascade do |t|
