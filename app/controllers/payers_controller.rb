@@ -1,85 +1,87 @@
 class PayersController < ApplicationController
 
-	def show
-		@payer = params[:id] ? Payer.find(params[:id]) : Payer.find_by(name: params[:payer_name])
+  def show
+    @payer = params[:id] ? Payer.find(params[:id]) : Payer.find_by(name: params[:payer_name])
 
-		# count of ads
-		@count_ads = @payer.ads.size
+    # count of ads
+    @count_ads = @payer.ads.size
 
-		# sum of min impressions for all ads
-		@min_impressions = @payer.min_impressions
+    # sum of min impressions for all ads
+    @min_impressions = @payer.min_impressions
 
-		# distinct advertisers (i.e. pages)
-		@advertisers = @payer.advertisers
+    # distinct advertisers (i.e. pages)
+    @advertisers = @payer.advertisers
 
-		# sum of spend for all advertisers
-		# @min_spend = @payer.min_spend # removed because precise_spend is better
+    # sum of spend for all advertisers
+    # @min_spend = @payer.min_spend # removed because precise_spend is better
 
-		aarps = @payer.ad_archive_report_pages.where(ad_archive_report: AdArchiveReport.order(:scrape_date).last)
-		@precise_spend = aarps.sum(:amount_spent)
-		@report_count_ads = aarps.sum(:ads_count)
+    starting_point_aarps = @payer.ad_archive_report_pages.where(ad_archive_report: AdArchiveReport.starting_point)
 
-		# breakdown of topics for all ads.
-		@topics = @payer.topic_breakdown
+    aarps = @payer.ad_archive_report_pages.where(ad_archive_report: AdArchiveReport.order(:scrape_date).last)
+    @precise_spend =  aarps.sum(:amount_spent) - starting_point_aarps.sum(:amount_spent)
+    @report_count_ads = aarps.sum(:ads_count)
 
-		# TODO: count of ads with a CollectorAd
-		fbpac_ads = FbpacAd.where(paid_for_by: @payer.name)
-		@fbpac_ads_cnt = fbpac_ads.count
-		# TODO: targetings used
-		@targetings = @payer.targeting_methods
+    # breakdown of topics for all ads.
+    @topics = @payer.topic_breakdown
 
-		# TODO: targetings used
+    # TODO: count of ads with a CollectorAd
+    fbpac_ads = FbpacAd.where(paid_for_by: @payer.name)
+    @fbpac_ads_cnt = fbpac_ads.count
+    # TODO: targetings used
+    @targetings = @payer.targeting_methods
 
-		# TODO: domain names linked to in ads (TODO: has to come from FBPAC or AdLibrary collector)
+    # TODO: targetings used
 
-		# TODO: notes are appended (or longest of?) unique payer / page pairs.
+    # TODO: domain names linked to in ads (TODO: has to come from FBPAC or AdLibrary collector)
 
-		respond_to do |format|
-		  format.html
-		  format.json { render json: {
-		  	payer: @payer.name,
-		    notes: @payer.notes,
+    # TODO: notes are appended (or longest of?) unique payer / page pairs.
 
-		    ads: @count_ads,
-		    fbpac_ads: @fbpac_ads_cnt,
-		    advertisers: @advertisers,
+    respond_to do |format|
+      format.html
+      format.json { render json: {
+        payer: @payer.name,
+        notes: @payer.notes,
 
-		    min_impressions: @min_impressions,
-		    # min_spend: @min_spend,
-		    precise_spend: @precise_spend,
-		    topics: @topics,
-		    targetings: @targetings
+        ads: @count_ads,
+        fbpac_ads: @fbpac_ads_cnt,
+        advertisers: @advertisers,
 
-		  } }
-		end
+        min_impressions: @min_impressions,
+        # min_spend: @min_spend,
+        precise_spend: @precise_spend,
+        topics: @topics,
+        targetings: @targetings
 
-	end
+      } }
+    end
 
-	def index
-		# lists all known payers
-		@all = Payer.all
-		respond_to do |format|
-			format.html 
-			format.json { render json: @all }
-		end
-	end
+  end
 
-	def index
-		# lists all known payers
-		@payers = Payer.paginate(page: params[:page], per_page: 30)
+  def index
+    # lists all known payers
+    @all = Payer.all
+    respond_to do |format|
+      format.html 
+      format.json { render json: @all }
+    end
+  end
+
+  def index
+    # lists all known payers
+    @payers = Payer.paginate(page: params[:page], per_page: 30)
 
 
-		respond_to do |format|
-			format.html 
-			format.json { render json: {
-					payers: @payers, 
+    respond_to do |format|
+      format.html 
+      format.json { render json: {
+          payers: @payers, 
           total_ads: @payers.total_entries,
           n_pages: @payers.total_pages,
           page: params[:page] || 1
-				}
-			}
-		end
-	end
+        }
+      }
+    end
+  end
 
 
 end
