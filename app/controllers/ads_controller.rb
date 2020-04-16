@@ -148,11 +148,14 @@ class AdsController < ApplicationController
         targeting = params[:targeting].nil? ? nil : JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
         poliprob =  params[:poliprob] ? JSON.parse(params[:poliprob]) : [70, 100]
         @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).includes(writable_ads: [:fbpac_ad, :ad], topics: {}).where("fbpac_ads.lang = ?", lang) # ad_texts need lang (or country)
-        if params[:search]
-            @ads = @ads.search_for(search).with_pg_search_rank # TODO maybe this should be by date too.
-        else
-            @ads = @ads.order(Arel.sql("coalesce(fbpac_ads.created_at, ads.ad_creation_time) desc"))
-        end
+        
+        @ads = @ads.order(Arel.sql("coalesce(fbpac_ads.created_at, ads.ad_creation_time) desc"))
+        # I think it's better to sort by date, always.
+        # if we search for a term, we're often looking for ads that contain the term
+        # not for the "most relevant" ones. (if we use pg_search_rank, often older ads that use the term a lot (or are very short) get sorted to the top, which is not a good outcome)
+        # here's how to do it we want to.
+        #  @ads = @ads.search_for(search).with_pg_search_rank # TODO maybe this should be by date too.
+
 
         if page_ids.size + advertiser_names.size > 0  # can be either a number or an advertiser
             @ads = @ads.where("fbpac_ads.advertiser in (?) or ads.page_id in (?)", advertiser_names, page_ids)
@@ -203,7 +206,7 @@ class AdsController < ApplicationController
             format.html 
             format.json { 
                 render json: {
-                    n_pages: @ads.to_a.size == PAGE_SIZE ? ((params[:page] || 0) + 1) : params[:page],
+                    n_pages: @ads.to_a.size == PAGE_SIZE ? ((params[:page].to_i || 1) + 1) : (params[:page] || 1),
                     page: params[:page] || 1,
                     ads: @ads.as_json(include: {writable_ads: {include: [:fbpac_ad, :ad]}}),
                 }
