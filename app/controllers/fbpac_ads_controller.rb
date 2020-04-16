@@ -2,9 +2,9 @@ class FbpacAdsController < ApplicationController
     before_action :set_lang
     skip_before_action :authenticate_user!
 
-    caches_action :index, expires_in: 5.minutes, :cache_path => Proc.new {|c|  (c.request.url + (params[:lang] || http_accept_language.user_preferred_languages.find{|lang| lang.match(/..-../)} || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";")).force_encoding("ascii-8bit") }
-    caches_action :homepage_stats, expires_in: 60.minutes, :cache_path => Proc.new {|c|  c.request.url + (params[:lang] || http_accept_language.user_preferred_languages.find{|lang| lang.match(/..-../)} || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";") }
-    caches_action :persona, expires_in: 30.minutes, :cache_path => Proc.new {|c|  c.request.url + (params[:lang] || http_accept_language.user_preferred_languages.find{|lang| lang.match(/..-../)} || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";") }
+    caches_action :index, expires_in: 5.minutes, :cache_path => Proc.new {|c|  (c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";")).force_encoding("ascii-8bit") }
+    caches_action :homepage_stats, expires_in: 60.minutes, :cache_path => Proc.new {|c|  c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";") }
+    caches_action :persona, expires_in: 30.minutes, :cache_path => Proc.new {|c|  c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";") }
 
 
     GENDERS_FB = ["men", "women"]
@@ -162,7 +162,7 @@ class FbpacAdsController < ApplicationController
     private
 
     def set_lang
-        @lang = params[:lang] || "en-US" # || http_accept_language.user_preferred_languages.find{|lang| lang.match(/..-../)} || "en-US"
+        @lang = params[:lang] || "en-US" # || "en-US"
         if @lang == "*-CA"
             @lang = ["en-CA", "fr-CA"]
         end
