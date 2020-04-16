@@ -196,14 +196,14 @@ class AdsController < ApplicationController
         # N.B. this is not distinct because SQL complains about 
         # having the ordering (on date) on something that's been discarded for the ordering.
         # the join is funny because each text_hash can join to multiple writable_ads (one for fbpac_ad and one for regular ad)
-        @ads = @ads.paginate(page: params[:page], per_page: PAGE_SIZE, total_entries: AdText.size) #.includes(writable_ads: [:fbpac_ad, :ad])
+        @ads = @ads.paginate(page: params[:page], per_page: PAGE_SIZE, total_entries: PAGE_SIZE * 20) #.includes(writable_ads: [:fbpac_ad, :ad])
+        # count queries on this join are hella expensive
 
         respond_to do |format|
             format.html 
             format.json { 
                 render json: {
-                    total_ads: @ads.total_entries,
-                    n_pages: @ads.total_pages,
+                    n_pages: @ads.to_a.size == PAGE_SIZE ? ((params[:page] || 0) + 1) : params[:page],
                     page: params[:page] || 1,
                     ads: @ads.as_json(include: {writable_ads: {include: [:fbpac_ad, :ad]}}),
                 }
@@ -260,7 +260,7 @@ class AdsController < ApplicationController
         @kind_of_thing = params[:kind]
         @first_seen = params[:first_seen] || false
 
-        ads = FbpacAd.where(lang: lang).where("targets is not null")
+        ads = FbpacAd.where("political_probability > 0.70 and suppressed = false").where(lang: lang).where("targets is not null")
         if (@time_count && @time_unit)
             if @first_seen
                 ads = ads.having("min(created_at) > #{time_string}")
