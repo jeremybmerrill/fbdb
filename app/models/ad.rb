@@ -56,7 +56,9 @@ class Ad < ApplicationRecord
     end
 
     def clean_text
-      text.strip.downcase.gsub(/\s+/, ' ').gsub(/[^a-z 0-9]/, '')
+      # clean_text exists to get hashed. those hashes have to match with hashes from FBPAC-collected ads.
+      # FBPAC ads only make it easy/possible to get the equivalent of ad_creative_body
+      ad_creative_body.to_s.strip.downcase.gsub(/\s+/, ' ').gsub(/[^a-z 0-9]/, '')
     end
 end
 
