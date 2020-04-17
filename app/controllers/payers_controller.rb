@@ -17,7 +17,7 @@ class PayersController < ApplicationController
 
     starting_point_aarps = @payer.ad_archive_report_pages.where(ad_archive_report: AdArchiveReport.starting_point)
 
-    aarps = @payer.ad_archive_report_pages.where(ad_archive_report: AdArchiveReport.order(:scrape_date).last)
+    aarps = @payer.ad_archive_report_pages.where(ad_archive_report: AdArchiveReport.where(loaded: true, kind: 'lifelong').order(:scrape_date).last)
     @precise_spend =  aarps.sum(:amount_spent) - starting_point_aarps.sum(:amount_spent)
     @report_count_ads = aarps.sum(:ads_count)
 

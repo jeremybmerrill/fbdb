@@ -20,7 +20,7 @@ class PagesController < ApplicationController
     # sum of spend for all payers
     # @min_spend = @page.min_spend # removed because precise_spend is better
     # @max_spend = @page.max_spend # removed because precise_spend is better
-    aarps = @page.ad_archive_report_pages.where(ad_archive_report: AdArchiveReport.order(:scrape_date).last)
+    aarps =                @page.ad_archive_report_pages.where(ad_archive_report: AdArchiveReport.where(loaded: true, kind: 'lifelong').order(:scrape_date).last)
     starting_point_aarps = @page.ad_archive_report_pages.where(ad_archive_report: AdArchiveReport.starting_point)
 
     @precise_spend =  aarps.sum(:amount_spent) - starting_point_aarps.sum(:amount_spent)
