@@ -3,6 +3,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby '2.6.5'
 gem 'actionpack-action_caching'
+gem 'active_record_extended'
 
 gem 'will_paginate', '~> 3.1.0'
 gem 'pg'

@@ -27,6 +27,7 @@ Rails.application.routes.draw do
 
   get "ads", to: "ads#index"
   get "ads/search/", to: "ads#search"
+  get "ads/search2/", to: "ads#search2"
   get "ads/list_targets", to: "ads#list_targets"
   get "ads/pivot/:kind", to: "ads#pivot"
 
