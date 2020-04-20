@@ -135,7 +135,8 @@ class AdsController < ApplicationController
     end
 
 
-    def search2
+    def search_with_union
+        # this takes longer. not a success.
         search = params[:search]
         lang = params[:lang] || "en-US" # TODO.
         page_ids = params[:page_id] ? JSON.parse(params[:page_id]) : []
@@ -154,9 +155,8 @@ class AdsController < ApplicationController
         advertiser_names.uniq!
 
 
-
-        @fbpac_ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad]).where("fbpac_ads.lang = ?", lang) # ad_texts need lang (or country)
-        @api_ads =   AdText.left_outer_joins(writable_ads: [:ad])
+        @fbpac_ads = AdText.joins(writable_ads: [:fbpac_ad]).where("fbpac_ads.lang = ?", lang) # ad_texts need lang (or country)
+        @api_ads =   AdText.joins(:writable_ads)
 
         if search
             @fbpac_ads = @fbpac_ads.search_for(search)
@@ -165,12 +165,12 @@ class AdsController < ApplicationController
 
         if page_ids.size + advertiser_names.size > 0  # can be either a number or an advertiser
             @fbpac_ads = @fbpac_ads.where("fbpac_ads.advertiser in (?)", advertiser_names)
-            @api_ads = @api_ads.where("ads.page_id in (?)", page_ids)
+            @api_ads = @api_ads.joins(writable_ads: [:ad]).where("ads.page_id in (?)", page_ids)
         end
 
         if publish_date
             @fbpac_ads = @fbpac_ads.where("fbpac_ads.created_at > ?",  publish_date)
-            @api_ads = @api_ads.where("ads.ad_creation_time > ?",  publish_date)
+            @api_ads = @api_ads.joins(writable_ads: [:ad]).where("ads.ad_creation_time > ?",  publish_date)
         end
 
         if poliprob.size != 2
@@ -183,7 +183,7 @@ class AdsController < ApplicationController
 
         if paid_for_by
             @fbpac_ads = @fbpac_ads.where("fbpac_ads.paid_for_by ilike",  paid_for_by.downcase)
-            @api_ads = @api_ads.where("ads.funding_entity ilike ?",  paid_for_by.downcase)
+            @api_ads = @api_ads.joins(writable_ads: [:ad]).where("ads.funding_entity ilike ?",  paid_for_by.downcase)
         end
 
         if topic_id
@@ -204,10 +204,11 @@ class AdsController < ApplicationController
             @fbpac_ads = @fbpac_ads.where("fbpac_ads.targets @> ?",  JSON.dump(targeting.map{|a, b| b ? {target: a.to_s, segment: b.to_s} : {target: a.to_s} }))
         end
 
-        @ads = AdText.union(@api_ads.select("ad_texts.*, ads.ad_creation_time as sort_key"), @fbpac_ads.select("ad_texts.*, fbpac_ads.created_at as sort_key")).includes(writable_ads: [:fbpac_ad, :ad], topics: {})
+        # TODO: sorting by the ad_text sort date is a bad idea, but I guess it's what we'll have to do.
+        @ads = AdText.union(@api_ads.select("ad_texts.*, ad_texts.created_at as sort_key"), @fbpac_ads.select("ad_texts.*, fbpac_ads.created_at as sort_key")).includes(writable_ads: [:fbpac_ad, :ad], topics: {})
 
         @ads = @ads.order(Arel.sql("sort_key desc"))
-        # I think it's better to sort by date, always.
+        # it's better to sort by date, always (rather than relevance.)
         # if we search for a term, we're often looking for ads that contain the term
         # not for the "most relevant" ones. (if we use pg_search_rank, often older ads that use the term a lot (or are very short) get sorted to the top, which is not a good outcome)
         # here's how to do it we want to.
@@ -229,13 +230,267 @@ class AdsController < ApplicationController
                 }
              }
         end
-
-
-
-
-
-
     end
+
+
+    def left_outer_join_search_without_ads
+        search = params[:search]
+        lang = params[:lang] || "en-US" # TODO.
+        page_ids = params[:page_id] ? JSON.parse(params[:page_id]) : []
+        advertiser_names = params[:advertisers] ? JSON.parse(params[:advertisers])  : []
+        publish_date = params[:publish_date] # e.g. "2019-01-01"
+        topic_id = params[:topic_id] # TODO: this isn't supported yet by the frontend, it just sends a topic name
+        topic_id = Topic.find_by(topic: params[:topic])&.id if !topic_id && params[:topic]
+        no_payer = params[:no_payer]
+        paid_for_by = params[:paid_for_by] # TODO support multiple? (should be same as page_ids)
+        targeting = params[:targeting].nil? ? nil : JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
+        poliprob =  params[:poliprob] ? JSON.parse(params[:poliprob]) : [70, 100]
+        new_page_ids = Page.where(page_name: [advertiser_names]).select("page_id").map(&:page_id)
+        advertiser_names += Page.where(page_id: page_ids).select("page_name").map(&:page_name)
+        page_ids += new_page_ids
+        page_ids.uniq!
+        advertiser_names.uniq!
+
+        # APR17: .includes(writable_ads: [:fbpac_ad, :ad], topics: {}) was here
+        @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad]).where("fbpac_ads.lang = ? or writable_ads.archive_id is not null", lang) # ad_texts need lang (or country)
+        
+        @ads = @ads.order("ad_texts.first_seen desc")
+
+        # it's better to sort by date, always (rather than relevance.)
+        # if we search for a term, we're often looking for ads that contain the term
+        # not for the "most relevant" ones. (if we use pg_search_rank, often older ads that use the term a lot (or are very short) get sorted to the top, which is not a good outcome)
+        # here's how to do it we want to.
+        if search
+            @ads = @ads.search_for(search) # TODO maybe this should be by date too.
+        end
+
+
+        if page_ids.size + advertiser_names.size > 0  # can be either a number or an advertiser
+            @ads = @ads.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).where("fbpac_ads.advertiser in (?) or ads.page_id in (?)", advertiser_names, page_ids)
+        end
+
+        if publish_date
+            @ads = @ads.where("writable_ads.ad_creation_time > ?",  publish_date, publish_date)
+        end
+
+        if poliprob.size != 2
+            raise ArgumentError, "poliprob needs to be a JSON array of two numbers"
+        end
+        condition = "(fbpac_ads.political_probability >= ? and fbpac_ads.political_probability <= ?) or writable_ads.archive_id is not null"
+        @ads = @ads.where(condition, poliprob[0] / 100.0, poliprob[1] / 100.0)
+
+        # NO WAY TO AVOID A JOIN WITH ads THAT ISN"T INDEXED
+        if paid_for_by
+            @ads = @ads.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).where("fbpac_ads.paid_for_by ilike ? or ads.funding_entity ilike ?",  paid_for_by.downcase, paid_for_by.downcase)
+        end
+
+        if topic_id
+            puts "topic_id: #{topic_id}"
+            @ads = @ads.joins(:ad_topics).where("ad_topics.topic_id": topic_id)
+        end
+
+        if no_payer # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
+            @ads = @ads.where("fbpac_ads.paid_for_by is null and ads.archive_id is null")
+        end
+
+        if targeting # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
+                     # TODO: adapt for a way to combine teh params states, ages.
+                     # needs to be transformed from [["MinAge", 59], ["Interest", "Sean Hannity"]] into
+
+            @ads = @ads.where("fbpac_ads.targets @> ?",  JSON.dump(targeting.map{|a, b| b ? {target: a.to_s, segment: b.to_s} : {target: a.to_s} }))
+        end
+
+        # N.B. this is not distinct because SQL complains about 
+        # having the ordering (on date) on something that's been discarded for the ordering.
+        # the join is funny because each text_hash can join to multiple writable_ads (one for fbpac_ad and one for regular ad)
+        @ads = @ads.includes(writable_ads: [:fbpac_ad, :ad], topics: {}).paginate(page: params[:page], per_page: PAGE_SIZE, total_entries: PAGE_SIZE * 20) #.includes(writable_ads: [:fbpac_ad, :ad])
+        # count queries on this join are hella expensive
+
+        # a possibility here (also involving ad_text's AdText.jsonify)
+        # would be to do the "includes" myself to avoid looking up ALL the variants for an ad_text.
+        # it's kind of complicated re-doing all of Rails's work in the "includes" method.
+        # @ads = @ads.includes(:writable_ads)
+        # fbpac_ads = Hash[*FbpacAd.find(@ads.map{|ad_text| ad_text.writable_ads.first(2).map(&:ad_id)}.flatten.compact).map{|ad| [ad.id, ad]}.flatten]
+        # api_ads = Hash[*Ad.find(@ads.map{|ad_text| ad_text.writable_ads.first(2).map(&:archive_id)}.flatten.compact).map{|ad| [ad.archive_id, ad]}.flatten]
+        # @ads.map{|ad_text| AdText.jsonify(ad_text, fbpac_ads, api_ads)}
+
+
+        respond_to do |format|
+            format.html 
+            format.json { 
+                render json: {
+                    # because counts are very expensive, we are faking pagination and display one additional page if there's exactly PAGE_SIZE items returned by the current page
+                    n_pages: @ads.to_a.size == PAGE_SIZE ? ([params[:page].to_i + 1, 2].max) : (params[:page] || 1),
+                    page: params[:page] || 1,
+                    ads: @ads.as_json(include: {writable_ads: {include: [:fbpac_ad, :ad]}}),
+                }
+             }
+        end
+    end
+
+
+    def jeremys_double_method_search
+        search = params[:search]
+        lang = params[:lang] || "en-US" # TODO.
+        page_ids = params[:page_id] ? JSON.parse(params[:page_id]) : []
+        advertiser_names = params[:advertisers] ? JSON.parse(params[:advertisers])  : []
+        publish_date = params[:publish_date] # e.g. "2019-01-01"
+        topic_id = params[:topic_id] # TODO: this isn't supported yet by the frontend, it just sends a topic name
+        topic_id = Topic.find_by(topic: params[:topic])&.id if !topic_id && params[:topic]
+        no_payer = params[:no_payer]
+        paid_for_by = params[:paid_for_by] # TODO support multiple? (should be same as page_ids)
+        targeting = params[:targeting].nil? ? nil : JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
+        poliprob =  params[:poliprob] ? JSON.parse(params[:poliprob]) : [70, 100]
+
+        # if you specify an advertiser by name (as the app does as of 4/17/20), e.g. /ads/search.json?advertisers=[%22Joe%20Biden%22]&poliprob=[70,100]
+        # then we have to find the page_id that matches in order to get the ads for that advertiser from the HL FBAPI DB.
+        new_page_ids = Page.where(page_name: [advertiser_names]).select("page_id").map(&:page_id)
+        advertiser_names += Page.where(page_id: page_ids).select("page_name").map(&:page_name)
+        page_ids += new_page_ids
+        page_ids.uniq!
+        advertiser_names.uniq!
+
+        if params[:publish_date] || params[:paid_for_by]
+            # if the search requires joining to the `ads` table to use columns there (that aren't on ad_texts or writable_ads)
+            # then we have to do the search via the UNION method.
+            # e.g. ?advertisers=[%22Joe%20Biden%22]&poliprob=[70,100]
+            @fbpac_ads = AdText.joins(writable_ads: [:fbpac_ad]).where("fbpac_ads.lang = ?", lang) # ad_texts need lang (or country)
+            @api_ads =   AdText.joins(:writable_ads)
+
+            if search
+                @fbpac_ads = @fbpac_ads.search_for(search)
+                @api_ads   = @api_ads.search_for(search)
+            end
+
+            if page_ids.size + advertiser_names.size > 0  # can be either a number or an advertiser
+                @fbpac_ads = @fbpac_ads.where("fbpac_ads.advertiser in (?)", advertiser_names)
+                @api_ads = @api_ads.joins(writable_ads: [:ad]).where("ads.page_id in (?)", page_ids)
+            end
+
+            if publish_date
+                @fbpac_ads = @fbpac_ads.where("fbpac_ads.created_at > ?",  publish_date)
+                @api_ads = @api_ads.joins(writable_ads: [:ad]).where("ads.ad_creation_time > ?",  publish_date)
+            end
+
+            if poliprob.size != 2
+                raise ArgumentError, "poliprob needs to be a JSON array of two numbers"
+            end
+
+            # POLITICAL PROBABILITY BIT
+            # I'm not sure how this acts, or how it should act, with real FBAPI data, so I'm going to have to come back to it.
+            @fbpac_ads = @fbpac_ads.where("fbpac_ads.political_probability >= ? and fbpac_ads.political_probability <= ?", poliprob[0] / 100.0, poliprob[1] / 100.0)
+
+            if paid_for_by
+                @fbpac_ads = @fbpac_ads.where("fbpac_ads.paid_for_by ilike",  paid_for_by.downcase)
+                @api_ads = @api_ads.joins(writable_ads: [:ad]).where("ads.funding_entity ilike ?",  paid_for_by.downcase)
+            end
+
+            if topic_id
+                puts "topic_id: #{topic_id}"
+                @fbpac_ads = @fbpac_ads.joins(:ad_topics).where("ad_topics.topic_id": topic_id)
+                @api_ads = @api_ads.joins(:ad_topics).where("ad_topics.topic_id": topic_id)
+            end
+
+            if no_payer # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
+                @fbpac_ads = @fbpac_ads.where("fbpac_ads.paid_for_by is null")
+                @api_ads = Ad.none
+            end
+
+            if targeting # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
+                         # TODO: adapt for a way to combine teh params states, ages.
+                         # needs to be transformed from [["MinAge", 59], ["Interest", "Sean Hannity"]] into
+                @api_ads = Ad.none
+                @fbpac_ads = @fbpac_ads.where("fbpac_ads.targets @> ?",  JSON.dump(targeting.map{|a, b| b ? {target: a.to_s, segment: b.to_s} : {target: a.to_s} }))
+            end
+
+            # TODO: sorting by the ad_text sort date is a bad idea, but I guess it's what we'll have to do.
+            @ads = AdText.union(@api_ads, @fbpac_ads).includes(writable_ads: [:fbpac_ad, :ad], topics: {})
+
+            @ads = @ads.order(Arel.sql("last_seen desc"))
+            # it's better to sort by date, always (rather than relevance.)
+            # if we search for a term, we're often looking for ads that contain the term
+            # not for the "most relevant" ones. (if we use pg_search_rank, often older ads that use the term a lot (or are very short) get sorted to the top, which is not a good outcome)
+            # here's how to do it we want to.
+
+            # N.B. this is not distinct because SQL complains about 
+            # having the ordering (on date) on something that's been discarded for the ordering.
+            # the join is funny because each text_hash can join to multiple writable_ads (one for fbpac_ad and one for regular ad)
+            @ads = @ads.paginate(page: params[:page], per_page: PAGE_SIZE, total_entries: PAGE_SIZE * 20) #.includes(writable_ads: [:fbpac_ad, :ad])
+            # count queries on this join are hella expensive
+
+        else # if it DOESN'T require those columns (e.g. keyword search), it's quicker to do it via LEFT OUTER JOINS
+            # e.g. ?search="trump"
+            # APR17: .includes(writable_ads: [:fbpac_ad, :ad], topics: {}) was here
+            @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad]).where("fbpac_ads.lang = ? or writable_ads.archive_id is not null", lang) # ad_texts need lang (or country)
+            
+            @ads = @ads.order("writable_ads.created_at desc")
+
+            # it's better to sort by date, always (rather than relevance.)
+            # if we search for a term, we're often looking for ads that contain the term
+            # not for the "most relevant" ones. (if we use pg_search_rank, often older ads that use the term a lot (or are very short) get sorted to the top, which is not a good outcome)
+            # here's how to do it we want to.
+            if search
+                @ads = @ads.search_for(search) # TODO maybe this should be by date too.
+            end
+
+
+            if page_ids.size + advertiser_names.size > 0  # can be either a number or an advertiser
+                @ads = @ads.where("fbpac_ads.advertiser in (?) or ad_texts.page_id in (?)", advertiser_names, page_ids)
+            end
+
+            if publish_date
+                @ads = @ads.where("writable_ads.ad_creation_time > ?",  publish_date, publish_date)
+            end
+
+            if poliprob.size != 2
+                raise ArgumentError, "poliprob needs to be a JSON array of two numbers"
+            end
+            condition = "(fbpac_ads.political_probability >= ? and fbpac_ads.political_probability <= ?) or writable_ads.archive_id is not null"
+            @ads = @ads.where(condition, poliprob[0] / 100.0, poliprob[1] / 100.0)
+
+            # NO WAY TO AVOID A JOIN WITH ads THAT ISN"T INDEXED
+            if paid_for_by
+                @ads = @ads.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).where("fbpac_ads.paid_for_by ilike ? or ads.funding_entity ilike ?",  paid_for_by.downcase, paid_for_by.downcase)
+            end
+
+            if topic_id
+                puts "topic_id: #{topic_id}"
+                @ads = @ads.joins(:ad_topics).where("ad_topics.topic_id": topic_id)
+            end
+
+            if no_payer # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
+                @ads = @ads.where("fbpac_ads.paid_for_by is null and ads.archive_id is null")
+            end
+
+            if targeting # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
+                         # TODO: adapt for a way to combine teh params states, ages.
+                         # needs to be transformed from [["MinAge", 59], ["Interest", "Sean Hannity"]] into
+
+                @ads = @ads.where("fbpac_ads.targets @> ?",  JSON.dump(targeting.map{|a, b| b ? {target: a.to_s, segment: b.to_s} : {target: a.to_s} }))
+            end
+
+            # N.B. this is not distinct because SQL complains about 
+            # having the ordering (on date) on something that's been discarded for the ordering.
+            # the join is funny because each text_hash can join to multiple writable_ads (one for fbpac_ad and one for regular ad)
+            @ads = @ads.includes(writable_ads: [:fbpac_ad, :ad], topics: {}).paginate(page: params[:page], per_page: PAGE_SIZE, total_entries: PAGE_SIZE * 20) #.includes(writable_ads: [:fbpac_ad, :ad])
+            # count queries on this join are hella expensive
+
+
+        end
+
+        respond_to do |format|
+            format.html 
+            format.json { 
+                render json: {
+                    # because counts are very expensive, we are faking pagination and display one additional page if there's exactly PAGE_SIZE items returned by the current page
+                    n_pages: @ads.to_a.size == PAGE_SIZE ? ([params[:page].to_i + 1, 2].max) : (params[:page] || 1),
+                    page: params[:page] || 1,
+                    ads: @ads.as_json(include: {writable_ads: {include: [:fbpac_ad, :ad]}}),
+                }
+             }
+        end
+    end
+
 
     def search
         search = params[:search]
@@ -255,10 +510,11 @@ class AdsController < ApplicationController
         page_ids.uniq!
         advertiser_names.uniq!
 
+
         @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).includes(writable_ads: [:fbpac_ad, :ad], topics: {}).where("fbpac_ads.lang = ? or ads.archive_id is not null", lang) # ad_texts need lang (or country)
         
         @ads = @ads.order(Arel.sql("coalesce(fbpac_ads.created_at, ads.ad_creation_time) desc"))
-        # I think it's better to sort by date, always.
+        # it's better to sort by date, always (rather than relevance.)
         # if we search for a term, we're often looking for ads that contain the term
         # not for the "most relevant" ones. (if we use pg_search_rank, often older ads that use the term a lot (or are very short) get sorted to the top, which is not a good outcome)
         # here's how to do it we want to.

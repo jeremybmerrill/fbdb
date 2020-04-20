@@ -17,28 +17,44 @@ require 'digest'
 
 namespace :text do 
   task ads: :environment do 
-    new_ads = Ad.left_outer_joins(:writable_ad).where(writable_ads: {archive_id: nil})# ads that don't have a writable ad or whose writable ad doesn't have a text hash in it
-    ads_without_text_hash = WritableAd.where("text_hash is null and archive_id is not null")
-
-    ads_hashed = 0
-
-    (new_ads.map{|ad| wad = WritableAd.new;  wad.ad = ad; wad} + ads_without_text_hash).each do |wad|
+    def create_ad_text(wad)
       wad.text_hash = Digest::SHA1.hexdigest(wad.ad.clean_text)
       ad_text = AdText.find_or_create_by(text_hash: wad.text_hash)
       ad_text.text ||= wad.ad.text
-      ad_text.search_text ||= wad.ad.page.page_name + " " + wad.ad.text # TODO: add CTA text, etc.
-      ad_text.save
-      ads_hashed += 1
-      wad.ad_text = ad_text
-      wad.save
+      ad_text.search_text ||= wad.ad.page.page_name + " " + wad.ad.text
+      ad_text.first_seen = [ad_text.first_seen, wad.ad.ad_creation_time].compact.min # set the creation time to be the earliest we've seen for this text.
+      ad_text.last_seen = [ad_text.last_seen, wad.ad.ad_delivery_stop_time].compact.max
+      ad_text.page_id ||= wad.ad.page_id
+      ad_text.advertiser ||= wad.ad.page.page_name
+      ad_text.paid_for_by ||= wad.ad.funding_entity
+      ad_text.save!
+      ad_text
+    end
+
+    new_ads = Ad.left_outer_joins(:writable_ad).where(writable_ads: {archive_id: nil}). # ads that don't have a writable ad or whose writable ad doesn't have a text hash in it
+      where(page_id: 7860876103)
+    ads_without_text_hash = WritableAd.where("text_hash is null and archive_id is not null")
+
+    ads_hashed = 0
+    new_ads.find_in_batches(batch_size: 16).map do |batch|
+        batch.map{|ad| wad = WritableAd.new;  wad.ad = ad; wad}.each do |wad|
+        wad.ad_text = create_ad_text(wad)
+        wad.save
+        ads_hashed += 1
+      end
+    end
+    ads_without_text_hash.find_in_batches(batch_size: 16).each do |batch|
+      batch.each do |wad|
+        wad.ad_text = create_ad_text(wad)
+        wad.save
+        ads_hashed += 1
+      end
     end
     RestClient.post(
         ENV["SLACKWH"],
         JSON.dump({"text" => "text hashing for FB API ads went swimmingly. (#{ads_hashed} ads hashed)" }),
         {:content_type => "application/json"}
-    ) if ads_hashed > 0
-
-
+    ) if ads_hashed > 0 && ENV["SLACKWH"]
   end
 
   task fbpac_ads: :environment do 
@@ -47,7 +63,13 @@ namespace :text do
     def create_ad_text(wad)
         ad_text = AdText.find_or_initialize_by(text_hash: wad.text_hash)
         ad_text.text ||= wad.fbpac_ad.text
-        ad_text.search_text ||= wad.fbpac_ad.advertiser.to_s + " " + wad.fbpac_ad.text # TODO: add CTA text, etc.
+        ad_text.search_text ||= wad.fbpac_ad.advertiser.to_s + " " + wad.fbpac_ad.text # TODO: consider adding CTA text, etc.
+
+        ad_text.first_seen = [ad_text.first_seen, wad.fbpac_ad.created_at].compact.min # set the creation time to be the earliest we've seen for this text.
+        ad_text.last_seen = [ad_text.last_seen, wad.fbpac_ad.updated_at].compact.max
+        ad_text.advertiser ||= wad.fbpac_ad.advertiser
+        ad_text.paid_for_by ||= wad.fbpac_ad.paid_for_by
+
         ad_text.save!
         ad_text
     end
@@ -73,7 +95,7 @@ namespace :text do
         ENV["SLACKWH"],
         JSON.dump({"text" => "text hashing for collector ads went swimmingly. (#{counter} batches processed)" }),
         {:content_type => "application/json"}
-    ) if counter > 0
+    ) if counter > 0 && ENV["SLACKWH"]
 
 
   end  

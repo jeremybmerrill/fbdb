@@ -11,6 +11,7 @@ class AdText < ApplicationRecord
   pg_search_scope :search_for, 
                   against: %i(search_text),
                   ignoring: :accents,
+                  ranked_by: "id",
                   using: {
                     tsearch: {
                       negation: true,
@@ -35,12 +36,20 @@ class AdText < ApplicationRecord
       fbapi_ad = json["writable_ads"].find{|wad| wad.has_key?("ad")}&.dig("ad") || {}
       topics = json.extract!("topics")
       new_json = json["writable_ads"].first.dup.without("ad", "fbpac_ad").merge(fbpac_ad.merge(fbapi_ad)).merge(topics)
-      new_json["created_at"] = json["writable_ads"].map{|ad| ad.has_key?("fbpac_ad") ? ad["fbpac_ad"]["created_at"] : ad["ad"]["ad_delivery_start_time"]  }.min
-      new_json["updated_at"] = json["writable_ads"].map{|ad| ad.has_key?("fbpac_ad") ? ad["fbpac_ad"]["updated_at"] : (ad["ad"]["ad_delivery_stop_time"] || ad["ad"]["ad_delivery_start_time"])  }.max
-
-      new_json["variants"] = json["writable_ads"].map{|ad| ad.has_key?("fbpac_ad") ? ad["fbpac_ad"] : ad["ad"]  }
+      # new_json["created_at"] = json["writable_ads"].map{|ad| ad.has_key?("fbpac_ad") ? ad["fbpac_ad"]["created_at"] : ad["ad"]["ad_delivery_start_time"]  }.min
+      # new_json["updated_at"] = json["writable_ads"].map{|ad| ad.has_key?("fbpac_ad") ? ad["fbpac_ad"]["updated_at"] : (ad["ad"]["ad_delivery_stop_time"] || ad["ad"]["ad_delivery_start_time"])  }.max
+      new_json["created_at"]  = json["first_seen"]
+      new_json["updated_at"]  = json["last_seen"]
+      new_json["variants"] = json["writable_ads"].first(2).map{|ad| ad.has_key?("fbpac_ad") ? ad["fbpac_ad"] : ad["ad"]  }
       new_json
   end
+
+  # def self.jsonify(ad_text, fbpac_ads, api_ads)
+  #   json = ad_text.writable_ads.first
+  #   json["topics"] = ad_text.topics
+  #   json["variants"] = ad_text.writable_ads
+
+  # end
 
   def self.classify_topic(ad_texts)
     res_json = RestClient.post(ENV["TOPICS_URL"] + "/topics", {'texts' => ad_texts.map(&:text)}.to_json, {content_type: :json, accept: :json})
