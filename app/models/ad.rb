@@ -12,7 +12,6 @@ class Ad < ApplicationRecord
     has_one :fbpac_ad, primary_key: :ad_id, foreign_key: :id # doesn't work anymore, sadly
     
     def as_json(options={})
-      # translating this schema to match the FBPAC one as much as possible
       preset_options = {
         include: { page: { only: :page_name },
                    payer:    { only: :name },
@@ -22,13 +21,18 @@ class Ad < ApplicationRecord
       if options[:include].is_a? Symbol
         options[:include] = Hash[options[:include], nil]
       end
-      options[:include] = preset_options[:include].deep_merge(!options.nil? && options[:include] ? options[:include] : {})
+      if !options[:include].nil? && options.has_key?(:include)
+        options[:include] = preset_options[:include].deep_merge(!options.nil? && options[:include] ? options[:include] : {})
+      end
+
       super(options).tap do |json|
-        json["advertiser"] = (json["page"] || {})["page_name"]
+        advertiser = (json["page"] || {})["page_name"]
+        json["advertiser"] = advertiser if advertiser
         json.delete("page")
         json["funding_entity"] = json["funding_entity"] || (json["payer"] || {})["name"]
         json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
-        json = json.delete("writable_ad").merge(json)
+        json = json.delete("writable_ad") if json.has_key?("writable_ad")
+        json = json.merge(json)
       end
     end
 

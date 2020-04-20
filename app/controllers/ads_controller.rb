@@ -54,19 +54,20 @@ class AdsController < ApplicationController
     end
 
     def show_by_text
-        @ad_text = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).includes(writable_ads: [:fbpac_ad, :ad], topics: {}).find_by(text_hash: params[:text_hash])
-
-        # @fbpac_ads = FbpacAd.joins(:writable_ad).includes(:writable_ad).where({writable_ads: {text_hash: params[:text_hash]}})
-        # @ad_text  =       Ad.joins(:writable_ad).includes(:writable_ad).includes(:impressions).where({writable_ads: {text_hash: params[:text_hash]}})
+        # @ad_text = AdText.left_outer_joins(writable_ads: [:fbpac_ad, :ad]).includes(:writable_ads, topics: {}).find_by(text_hash: params[:text_hash])
+        @ad_text = AdText.find_by(text_hash: params[:text_hash])
 
 
-        @text = @ad_text.ads&.first&.text || @ad_text.fbpac_ads&.first&.message
+        @text = @ad_text.search_text
         @fbpac_ads_count = @ad_text.fbpac_ads.count
-        @api_ads_count = @ad_text.ads.count
-        @min_spend = @ad_text.impressions.sum(:min_spend)
-        @max_spend = @ad_text.impressions.sum(:max_spend)
-        @min_impressions = @ad_text.impressions.sum(:min_impressions)
-        @max_impressions = @ad_text.impressions.sum(:max_impressions)
+        @api_ads_count = @ad_text.writable_ads.where("archive_id is not null").count
+
+        # TODO: 
+        # @min_spend, @max_spend, @min_impressions, @max_impressions = @ad_text.ads.pluck('SUM(min_spend)', 'SUM(max_spend)', 'SUM(min_impressions)', 'SUM(max_impressions)')
+        # @min_spend = @ad_text.impressions.sum(:min_spend)
+        # @max_spend = @ad_text.impressions.sum(:max_spend)
+        # @min_impressions = @ad_text.impressions.sum(:min_impressions)
+        # @max_impressions = @ad_text.impressions.sum(:max_impressions)
 
         #TODO: distinct images/videos (needs ad library scrape, I think)
 
@@ -76,11 +77,11 @@ class AdsController < ApplicationController
             text: @text,
             fbpac_ads_count: @fbpac_ads_count,
             api_ads_count: @api_ads_count,
-            min_spend: @min_spend,
-            max_spend: @max_spend,
-            min_impressions: @min_impressions,
-            max_impressions: @max_impressions,
-            ad: @ad_text.as_json(include: {writable_ads: {include: [:fbpac_ad, :ad]}}),
+            # min_spend: @min_spend,
+            # max_spend: @max_spend,
+            # min_impressions: @min_impressions,
+            # max_impressions: @max_impressions,
+            ad: @ad_text.as_json(include: {writable_ads: {include: [:fbpac_ad]}}),
             } 
           }
         end
@@ -404,7 +405,7 @@ class AdsController < ApplicationController
             end
 
             # TODO: sorting by the ad_text sort date is a bad idea, but I guess it's what we'll have to do.
-            @ads = AdText.union(@api_ads, @fbpac_ads).includes(writable_ads: [:fbpac_ad, :ad], topics: {})
+            @ads = AdText.union(@api_ads, @fbpac_ads).includes(writable_ads: {}, topics: {})
 
             @ads = @ads.order(Arel.sql("last_seen desc"))
             # it's better to sort by date, always (rather than relevance.)
@@ -466,13 +467,13 @@ class AdsController < ApplicationController
                          # TODO: adapt for a way to combine teh params states, ages.
                          # needs to be transformed from [["MinAge", 59], ["Interest", "Sean Hannity"]] into
 
-                @ads = @ads.where("fbpac_ads.targets @> ?",  JSON.dump(targeting.map{|a, b| b ? {target: a.to_s, segment: b.to_s} : {target: a.to_s} }))
+                @ads = @ads.where("fbpac_ads.targets @> ? and writable_ads.archive_id is null",  JSON.dump(targeting.map{|a, b| b ? {target: a.to_s, segment: b.to_s} : {target: a.to_s} }))
             end
 
             # N.B. this is not distinct because SQL complains about 
             # having the ordering (on date) on something that's been discarded for the ordering.
             # the join is funny because each text_hash can join to multiple writable_ads (one for fbpac_ad and one for regular ad)
-            @ads = @ads.includes(writable_ads: [:fbpac_ad, :ad], topics: {}).paginate(page: params[:page], per_page: PAGE_SIZE, total_entries: PAGE_SIZE * 20) #.includes(writable_ads: [:fbpac_ad, :ad])
+            @ads = @ads.includes(:writable_ads, topics: {}).paginate(page: params[:page], per_page: PAGE_SIZE, total_entries: PAGE_SIZE * 20) #.includes(writable_ads: [:fbpac_ad, :ad])
             # count queries on this join are hella expensive
 
 
@@ -485,7 +486,7 @@ class AdsController < ApplicationController
                     # because counts are very expensive, we are faking pagination and display one additional page if there's exactly PAGE_SIZE items returned by the current page
                     n_pages: @ads.to_a.size == PAGE_SIZE ? ([params[:page].to_i + 1, 2].max) : (params[:page] || 1),
                     page: params[:page] || 1,
-                    ads: @ads.as_json(include: {writable_ads: {include: [:fbpac_ad, :ad]}}),
+                    ads: @ads.as_json(include: {writable_ads: {} }),
                 }
              }
         end

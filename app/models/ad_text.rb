@@ -22,25 +22,32 @@ class AdText < ApplicationRecord
 
   def as_json(options)
       preset_options = {
-        include: {writable_ads: {include: [:fbpac_ad, :ad]}, topics: {}}
+        include: {writable_ads: {include: [:fbpac_ad]}, topics: {}}
       }
       if options[:include].is_a? Symbol
         options[:include] = Hash[options[:include], nil]
       end
-      options[:include] = preset_options[:include].deep_merge(!options.nil? && options[:include] ? options[:include] : {})
+      if !options[:include].nil? && options.has_key?(:include)
+        options[:include] = preset_options[:include].deep_merge(!options.nil? && options[:include] ? options[:include] : {})
+      end
 
       # grab *one* the ad and fbpac ad
       # holds onto text hash, I guess.
       json = super(options)
       fbpac_ad = json["writable_ads"].find{|wad| wad.has_key?("fbpac_ad")}&.dig("fbpac_ad") || {}
-      fbapi_ad = json["writable_ads"].find{|wad| wad.has_key?("ad")}&.dig("ad") || {}
+      fbapi_ad_id = json["writable_ads"].find{|wad| wad["archive_id"]}&.dig("archive_id")
+      fbapi_ad = fbapi_ad_id ? Ad.find(fbapi_ad_id).as_json(includes: []) : {}
+
       topics = json.extract!("topics")
       new_json = json["writable_ads"].first.dup.without("ad", "fbpac_ad").merge(fbpac_ad.merge(fbapi_ad)).merge(topics)
-      # new_json["created_at"] = json["writable_ads"].map{|ad| ad.has_key?("fbpac_ad") ? ad["fbpac_ad"]["created_at"] : ad["ad"]["ad_delivery_start_time"]  }.min
-      # new_json["updated_at"] = json["writable_ads"].map{|ad| ad.has_key?("fbpac_ad") ? ad["fbpac_ad"]["updated_at"] : (ad["ad"]["ad_delivery_stop_time"] || ad["ad"]["ad_delivery_start_time"])  }.max
       new_json["created_at"]  = json["first_seen"]
       new_json["updated_at"]  = json["last_seen"]
-      new_json["variants"] = json["writable_ads"].first(2).map{|ad| ad.has_key?("fbpac_ad") ? ad["fbpac_ad"] : ad["ad"]  }
+
+      # Ad lookups (from the HL server takes 130ms each)
+      # So we only do it if we dont' have any FBPAC examples.
+      new_json["variants"] = json["writable_ads"].select{|wad| wad.has_key?("fbpac_ad")}.first(3).map{|ad| ad["fbpac_ad"]}
+      new_json["variants"] = json["writable_ads"].select{|ad| ad["archive_id"]}.first(1).map{|ad| Ad.find(ad["archive_id"])  } if new_json["variants"].size == 0
+
       new_json
   end
 
