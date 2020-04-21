@@ -4,6 +4,7 @@ class Page < ApplicationRecord
 	has_many :fbpac_ads, primary_key: :page_name, foreign_key: :advertiser
 	has_one  :writable_page, primary_key: :page_id, foreign_key: :page_id # just a proxy
 	has_many :ad_archive_report_pages, primary_key: :page_id, foreign_key: :page_id
+	has_many :writable_ads, primary_key: :page_id, foreign_key: :page_id
 	def min_spend
 		ads.joins(:impressions).group(:archive_id).sum(:min_spend).values.reduce(&:+)
 	end

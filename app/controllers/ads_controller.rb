@@ -1,34 +1,15 @@
 require 'elasticsearch/dsl'
-
-module Elasticsearch
-  module DSL
-    module Search
-      module Filters
-        class Nested
-          def query(*args, &block)
-            @query = block ? Elasticsearch::DSL::Search::Query.new(*args, &block) : args.first
-            self
-          end
-          def to_hash
-            hash = super
-            if @filter
-              _filter = @filter.respond_to?(:to_hash) ? @filter.to_hash : @filter
-              hash[self.name].update(filter: _filter)
-            end
-            if @query
-              _query = @query.respond_to?(:to_hash) ? @query.to_hash : @query
-              hash[self.name].update(query: _query)
-            end
-            hash
-          end
-        end
-      end
-    end
-  end
-end
-
 class AdsController < ApplicationController
     PAGE_SIZE = 30
+
+
+    caches_action :show_by_text,                 expires_in: 5.minutes, :cache_path => Proc.new {|c|  (c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";")).force_encoding("ascii-8bit") }
+    caches_action :overview,                     expires_in: 60.minutes, :cache_path => Proc.new {|c|  c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";") }
+    caches_action :index,                        expires_in: 30.minutes, :cache_path => Proc.new {|c|  c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";") }
+    caches_action :jeremys_double_method_search, expires_in: 5.minutes, :cache_path => Proc.new {|c|  (c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";")).force_encoding("ascii-8bit") }
+    caches_action :topics,                       expires_in: 60.minutes, :cache_path => Proc.new {|c|  c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";") }
+    caches_action :list_targets,                 expires_in: 30.minutes, :cache_path => Proc.new {|c|  c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";") }
+    caches_action :pivot,                        expires_in: 30.minutes, :cache_path => Proc.new {|c|  c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";") }
 
     # this should redirect to the show_by_text
     #   so that from an FB ad ID, we can get to the show_by_text.
@@ -88,7 +69,7 @@ class AdsController < ApplicationController
     end
 
     def overview
-        @ads_count       = "(too many to quickly count at the moment)" # Ad.count
+        @ads_count       = AdArchiveReport.where(kind: 'lifelong', loaded: true).order(:scrape_date).last.ad_archive_report_pages.sum("amount_spent")
         @fbpac_ads_count = FbpacAd.count
         @big_spenders = BigSpender.preload(:writable_page).preload(:ad_archive_report_page).preload(:page)
         @top_advertisers = ActiveRecord::Base.connection.exec_query('SELECT ad_archive_report_pages.page_id, 
@@ -382,7 +363,7 @@ class AdsController < ApplicationController
             @fbpac_ads = @fbpac_ads.where("fbpac_ads.political_probability >= ? and fbpac_ads.political_probability <= ?", poliprob[0] / 100.0, poliprob[1] / 100.0)
 
             if paid_for_by
-                @fbpac_ads = @fbpac_ads.where("fbpac_ads.paid_for_by ilike",  paid_for_by.downcase)
+                @fbpac_ads = @fbpac_ads.where("fbpac_ads.paid_for_by ilike ?",  paid_for_by.downcase)
                 @api_ads = @api_ads.joins(writable_ads: [:ad]).where("ads.funding_entity ilike ?",  paid_for_by.downcase)
             end
 
@@ -424,7 +405,7 @@ class AdsController < ApplicationController
             # APR17: .includes(writable_ads: [:fbpac_ad, :ad], topics: {}) was here
             @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad]).where("fbpac_ads.lang = ? or writable_ads.archive_id is not null", lang) # ad_texts need lang (or country)
             
-            @ads = @ads.order("writable_ads.created_at desc")
+            @ads = @ads.order("ad_texts.first_seen desc")
 
             # it's better to sort by date, always (rather than relevance.)
             # if we search for a term, we're often looking for ads that contain the term
