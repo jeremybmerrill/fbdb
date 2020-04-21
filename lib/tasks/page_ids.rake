@@ -9,7 +9,9 @@ namespace :page_ids do
     FbpacAd.where("created_at > '2020-01-01'").where("page_id is null").find_in_batches(batch_size: batch_size) do |ads|
       ads.each do |ad|
         next if ad.html.include?("ego_unit")
-        ad.page_id = ad.html.match(/data-hovercard="https:\/\/www.facebook.com\/(\d+)"/)[1].to_i
+        match = ad.html.match(/data-hovercard="https:\/\/www.facebook.com\/(\d+)"/)
+        next unless match
+        ad.page_id = match[1].to_i
         ad.save
       end
     end
