@@ -28,6 +28,7 @@ class Ad < ApplicationRecord
       super(options).tap do |json|
         advertiser = (json["page"] || {})["page_name"]
         json["advertiser"] = advertiser if advertiser
+        json["text"] = json.delete("ad_creative_body")
         json.delete("page")
         json["funding_entity"] = json["funding_entity"] || (json["payer"] || {})["name"]
         json["topics"] = json["topics"]&.map{|topic| topic["topic"]}
