@@ -8,13 +8,13 @@ class PagesController < ApplicationController
     @page = params[:id] ? Page.find_by(page_id: params[:id]) : Page.find_by(page_name: params[:page_name])
 
     # count of ads
-    @count_ads = @page.ads.size
+    @count_ads = AdArchiveReportPage.where(ad_archive_report_id: AdArchiveReport.where(kind: 'lifelong', loaded: true).order(:scrape_date).last.id, page_id: @page.page_id).sum("ads_count")
 
 
     # sum of min impressions for all ads
     # @min_impressions = @page.min_impressions
     @min_impressions = "TK"
-    
+
     # count of distinct payers
     @payers = @page.payers
 
