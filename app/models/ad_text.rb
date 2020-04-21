@@ -42,6 +42,9 @@ class AdText < ApplicationRecord
       new_json = json["writable_ads"].first.dup.without("ad", "fbpac_ad").merge(fbpac_ad.merge(fbapi_ad)).merge(topics)
       new_json["created_at"]  = json["first_seen"]
       new_json["updated_at"]  = json["last_seen"]
+      new_json["page_id"] =     json["page_id"]
+      new_json["advertiser"] =  json["advertiser"]
+      new_json["paid_for_by"] = json["paid_for_by"]
 
       # Ad lookups (from the HL server takes 130ms each)
       # So we only do it if we dont' have any FBPAC examples.
