@@ -12,7 +12,7 @@ class Page < ApplicationRecord
 	end
 
 	def payers
-		Payer.where(name: ads.unscope(:order).select("distinct funding_entity"))
+		Payer.where(name: ads.unscope(:order).group("funding_entity").count.keys.reject{|a| a.blank?})
 	end
 
 	def min_impressions
@@ -20,11 +20,8 @@ class Page < ApplicationRecord
 	end
 
 	def topic_breakdown
-		if ads.count > 1
-			breakdown = Hash[*ads.unscope(:order).joins(writable_ad: [{:ad_text => [{ad_topics: :topic}]}]).select("topic, sum(coalesce(ad_topics.proportion, cast(1.0 as double precision))) as proportion").group(:topic).map{|a| [a.topic, a.proportion]}.flatten]
-		else
-			breakdown = Hash[*fbpac_ads.unscope(:order).joins(writable_ad: [{:ad_text => [{ad_topics: :topic}]}]).select("topic, sum(coalesce(ad_topics.proportion, cast(1.0 as double precision))) as proportion").group(:topic).map{|a| [a.topic, a.proportion]}.flatten]
-		end
+		breakdown = Hash[*writable_ads.joins({:ad_text => [{ad_topics: :topic}]}).select("topic, sum(coalesce(ad_topics.proportion, cast(1.0 as double precision))) as proportion").group(:topic).map{|a| [a.topic, a.proportion]}.flatten]
+
 		total = breakdown.values.reduce(&:+)
 		breakdown_proportions = {}
 		breakdown.each do | topic, amt |
