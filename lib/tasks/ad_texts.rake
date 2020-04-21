@@ -82,7 +82,7 @@ namespace :text do
     ) if ads_hashed > 0 && ENV["SLACKWH"]
   end
 
-  task fbpac_ads: :environment do 
+  task fbpac_ads: ["page_ids:fbpac_ads", :environment] do 
     # eventually this'll be done by the ad catcher, with ATI (but for "collector ads", obvi)
     # writable_ad should be created for EVERY new ad.
     def create_ad_text(wad)
