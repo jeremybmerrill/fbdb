@@ -12,8 +12,9 @@ class PagesController < ApplicationController
 
 
     # sum of min impressions for all ads
-    @min_impressions = @page.min_impressions
-
+    # @min_impressions = @page.min_impressions
+    @min_impressions = "TK"
+    
     # count of distinct payers
     @payers = @page.payers
 

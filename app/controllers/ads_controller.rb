@@ -88,7 +88,7 @@ class AdsController < ApplicationController
     end
 
     def overview
-        @ads_count       = Ad.count
+        @ads_count       = "(too many to quickly count at the moment)" # Ad.count
         @fbpac_ads_count = FbpacAd.count
         @big_spenders = BigSpender.preload(:writable_page).preload(:ad_archive_report_page).preload(:page)
         @top_advertisers = ActiveRecord::Base.connection.exec_query('SELECT ad_archive_report_pages.page_id, 
