@@ -77,7 +77,7 @@ namespace :text do
     end
     RestClient.post(
         ENV["SLACKWH"],
-        JSON.dump({"text" => "text hashing for FB API ads went swimmingly. (#{ads_hashed} ads hashed)" }),
+        JSON.dump({"text" => "(4/6): text hashing for FB API ads went swimmingly. (#{ads_hashed} ads hashed)" }),
         {:content_type => "application/json"}
     ) if ads_hashed > 0 && ENV["SLACKWH"]
   end
@@ -121,7 +121,7 @@ namespace :text do
     end
     RestClient.post(
         ENV["SLACKWH"],
-        JSON.dump({"text" => "text hashing for collector ads went swimmingly. (#{counter} batches processed)" }),
+        JSON.dump({"text" => "(3/6): text hashing for collector ads went swimmingly. (#{counter} batches processed)" }),
         {:content_type => "application/json"}
     ) if counter > 0 && ENV["SLACKWH"]
 

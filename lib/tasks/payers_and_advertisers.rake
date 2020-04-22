@@ -18,7 +18,7 @@ namespace :denormalize do
 
     RestClient.post(
         ENV["SLACKWH"],
-        JSON.dump({"text" => "Facebook payer-denormalization went swimmingly. (#{payers_created} created)" }),
+        JSON.dump({"text" => "(5/6): Facebook payer-denormalization went swimmingly. (#{payers_created} created)" }),
         {:content_type => "application/json"}
     )
 
