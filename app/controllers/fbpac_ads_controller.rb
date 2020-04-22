@@ -1,6 +1,6 @@
 class FbpacAdsController < ApplicationController
     before_action :set_lang
-    skip_before_action :authenticate_user!
+    skip_before_action :authenticate_user!, :except => [:suppress]
 
     caches_action :index, expires_in: 5.minutes, :cache_path => Proc.new {|c|  (c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";")).force_encoding("ascii-8bit") }
     caches_action :homepage_stats, expires_in: 60.minutes, :cache_path => Proc.new {|c|  c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";") }
@@ -107,6 +107,29 @@ class FbpacAdsController < ApplicationController
     def show
         ad = FbpacAd.where("political_probability > 0.7 and suppressed = false").select(ADS_COLUMNS).find_by(lang: ["en-US", "de-DE"], id: params[:id])
         render json: ad.as_propublica_json(:except => [:suppressed])
+    end
+
+    def suppress_page
+        # render suppress page on GET
+        respond_to do |format|
+            format.html {
+                render "suppress"
+            }
+        end
+    end
+
+
+
+    def suppress
+        @fbpac_ad = FbpacAd.find(params[:ad_id])
+        @fbpac_ad.suppressed = true
+        @fbpac_ad.save
+        flash.alert = "ad suppressed"
+        respond_to do |format|
+          format.html {
+            render "suppress"
+          }
+        end
     end
 
 

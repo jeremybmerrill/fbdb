@@ -1,0 +1,9 @@
+<h1><a href="/">Quartz Political Facebook Ads Dashboard</a></h1>
+
+<h2> Suppress a false-positive actually-not-political ad </h2>
+
+<%= form_with(url: "/fbpac_ads/suppress", method: "post") do %>
+  <%= label_tag(:ad_id, "Ad ID:") %>
+  <%= text_field_tag(:ad_id) %>
+  <%= submit_tag("Suppress") %>
+<% end %>

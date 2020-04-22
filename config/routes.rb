@@ -35,6 +35,9 @@ Rails.application.routes.draw do
   get "ads_by_archive_id/:archive_id", to: "ads#show"
   get "ads_by_text/:text_hash", to: "ads#show_by_text"
 
+  get "fbpac_ads/suppress", to: "fbpac_ads#suppress_page"
+  post "fbpac_ads/suppress", to: "fbpac_ads#suppress"
+
   get "bigspenders", to: "pages#bigspenders"
 
 
