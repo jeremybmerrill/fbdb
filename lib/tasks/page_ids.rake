@@ -6,7 +6,7 @@ namespace :page_ids do
     counter = 0
 
     batch_size = 500
-    FbpacAd.where("created_at > '2020-01-01'").where("page_id is null").find_in_batches(batch_size: batch_size) do |ads|
+    FbpacAd.where("created_at > '2020-01-01'").where("page_id is null and advertiser is not null").find_in_batches(batch_size: batch_size) do |ads|
       ads.each do |ad|
         next if ad.html.include?("ego_unit")
         match = ad.html.match(/data-hovercard="https:\/\/www.facebook.com\/(\d+)"/)
