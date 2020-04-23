@@ -23,19 +23,6 @@ namespace :text do
   end
 
   task ads: :environment do 
-    def create_ad_text(wad)
-      wad.text_hash = Digest::SHA1.hexdigest(wad.ad.clean_text)
-      ad_text = AdText.find_or_create_by(text_hash: wad.text_hash)
-      ad_text.text ||= wad.ad.text
-      ad_text.search_text ||= wad.ad.page.page_name + " " + wad.ad.text
-      ad_text.first_seen = [ad_text.first_seen, wad.ad.ad_creation_time].compact.min # set the creation time to be the earliest we've seen for this text.
-      ad_text.last_seen = [ad_text.last_seen, wad.ad.ad_delivery_stop_time].compact.max
-      ad_text.page_id ||= wad.ad.page_id
-      ad_text.advertiser ||= wad.ad.page.page_name
-      ad_text.paid_for_by ||= wad.ad.funding_entity
-      ad_text.save!
-      ad_text
-    end
 
     def top_advertiser_page_ids 
       most_recent_lifelong_report_id = AdArchiveReport.where(kind: 'lifelong', loaded: true).order(:scrape_date).last.id
@@ -62,15 +49,17 @@ namespace :text do
 
     ads_hashed = 0
     new_ads.find_in_batches(batch_size: 16).map do |batch|
-        batch.map{|ad| wad = WritableAd.new;  wad.ad = ad; wad}.each do |wad|
-        wad.ad_text = create_ad_text(wad)
+        batch.map(&:create_writable_ad!).each do |wad|
+        puts "batch (new ads)"
+        wad.ad_text = wad.ad.create_ad_text!(wad)
         wad.save
         ads_hashed += 1
       end
     end
     ads_without_text_hash.find_in_batches(batch_size: 16).each do |batch|
       batch.each do |wad|
-        wad.ad_text = create_ad_text(wad)
+        puts "batch (ads w/o text hash)"
+        wad.ad_text = wad.ad.create_ad_text!(wad)
         wad.save
         ads_hashed += 1
       end
@@ -85,37 +74,18 @@ namespace :text do
   task fbpac_ads: ["page_ids:fbpac_ads", :environment] do 
     # eventually this'll be done by the ad catcher, with ATI (but for "collector ads", obvi)
     # writable_ad should be created for EVERY new ad.
-    def create_ad_text(wad)
-        ad_text = AdText.find_or_initialize_by(text_hash: wad.text_hash)
-        ad_text.text ||= wad.fbpac_ad.text
-        ad_text.search_text ||= wad.fbpac_ad.advertiser.to_s + " " + wad.fbpac_ad.text # TODO: consider adding CTA text, etc.
-
-        ad_text.first_seen = [ad_text.first_seen, wad.fbpac_ad.created_at].compact.min # set the creation time to be the earliest we've seen for this text.
-        ad_text.last_seen = [ad_text.last_seen, wad.fbpac_ad.updated_at].compact.max
-        ad_text.advertiser ||= wad.fbpac_ad.advertiser
-        ad_text.paid_for_by ||= wad.fbpac_ad.paid_for_by
-
-        ad_text.save!
-        ad_text
-    end
     counter = 0
 
     batch_size = 500
     FbpacAd.left_outer_joins(:writable_ad).where(writable_ads: {ad_id: nil}).find_in_batches(batch_size: batch_size).each do |new_ads|
       counter += 1
       puts batch_size * counter
-      new_ads.each do |ad| 
-        wad = WritableAd.new
-        wad.fbpac_ad = ad
-        wad.text_hash = Digest::SHA1.hexdigest(wad.fbpac_ad.clean_text)
-        wad.ad_text = create_ad_text(wad)
-        wad.save!
-      end
+      new_ads.each(&:create_writable_ad!)
     end
     WritableAd.where("text_hash is null and ad_id is not null").find_in_batches(batch_size: batch_size).each do |ads_without_text_hash|
       ads_without_text_hash.each do |wad| 
           wad.text_hash = Digest::SHA1.hexdigest(wad.fbpac_ad.clean_text)
-          wad.ad_text = create_ad_text(wad)
+          wad.ad_text = create_ad_text!(wad)
           wad.save!
       end
     end

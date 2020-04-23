@@ -26,7 +26,7 @@ namespace :denormalize do
 
   task advertisers: :environment do 
     Ad.unscope(:order).group(:page_id).count.each do |page_id, cnt|
-      Page.find_or_create_by(page_id: page_id)
+      WritablePage.find_or_create_by(page_id: page_id)
     end
 
     # TODO: what about FbpacAds? we don't have a page_id there, necessarily.

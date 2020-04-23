@@ -100,7 +100,8 @@ class AdsController < ApplicationController
 
     def index
         # eventually the search method? 
-        # this is the method for browinsg random recent ads
+        # this could be a method for browinsg random recent ads
+        raise IOError, "I don't think this method gets used anywhere"
         @ads = Ad.includes(:writable_ad).paginate(page: params[:page], per_page: PAGE_SIZE)
 
         respond_to do |format|
@@ -558,6 +559,19 @@ class AdsController < ApplicationController
                     ads: @ads.as_json(include: {writable_ads: {include: [:fbpac_ad, :ad]}}),
                 }
              }
+        end
+    end
+
+    def swing_state_ads
+        wads = WritableAd.where(:swing_state_ad => true).where("page_id not in (6756153498, 416707608450706)").includes(:ad)
+        @grouped = wads.group_by(&:page_id).map{|page_id, page_wads| [page_id, page_wads.uniq{|wad| wad.text_hash }] }
+        respond_to do |format|
+            format.json {
+                render json: {
+                    topics: Topic.select(:id, :topic).map{|a| [a.topic, a.id]}
+                }
+            }
+            format.html
         end
     end
 

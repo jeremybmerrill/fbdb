@@ -1,6 +1,6 @@
 class FbpacAdsController < ApplicationController
     before_action :set_lang
-    skip_before_action :authenticate_user!, :except => [:suppress]
+    skip_before_action :authenticate_user!, :except => [:suppress, :suppress_page]
 
     caches_action :index, expires_in: 5.minutes, :cache_path => Proc.new {|c|  (c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";")).force_encoding("ascii-8bit") }
     caches_action :homepage_stats, expires_in: 60.minutes, :cache_path => Proc.new {|c|  c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";") }

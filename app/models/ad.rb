@@ -65,6 +65,31 @@ class Ad < ApplicationRecord
       # FBPAC ads only make it easy/possible to get the equivalent of ad_creative_body
       ad_creative_body.to_s.strip.downcase.gsub(/\s+/, ' ').gsub(/[^a-z 0-9]/, '')
     end
+
+    def create_writable_ad!
+      wad = WritableAd.new
+      wad.archive_id = archive_id
+      puts self.inspect
+      wad.page_id = page_id
+      wad.save!
+      wad
+    end
+
+    def create_ad_text!(wad)
+      wad.text_hash = Digest::SHA1.hexdigest(clean_text)
+      ad_text = AdText.find_or_create_by(text_hash: wad.text_hash)
+      ad_text.text ||= text
+      ad_text.search_text ||= page.page_name + " " + text
+      ad_text.first_seen = [ad_text.first_seen, ad_creation_time].compact.min # set the creation time to be the earliest we've seen for this text.
+      ad_text.last_seen = [ad_text.last_seen, ad_delivery_stop_time].compact.max
+      ad_text.page_id ||= page_id
+      ad_text.advertiser ||= page.page_name
+      ad_text.paid_for_by ||= funding_entity
+      ad_text.save!
+      ad_text
+    end
+
+
 end
 
 

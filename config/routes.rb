@@ -26,6 +26,7 @@ Rails.application.routes.draw do
   get "topics", to: "ads#topics"
 
   get "ads", to: "ads#index"
+  get "ads/swing_state_ads", to: "ads#swing_state_ads"
   get "ads/search/", to: "ads#jeremys_double_method_search"
   get "ads/list_targets", to: "ads#list_targets"
   get "ads/pivot/:kind", to: "ads#pivot"

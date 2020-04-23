@@ -64,5 +64,28 @@ class FbpacAd < ApplicationRecord
       }
   end
 
+  def create_writable_ad!
+    wad = WritableAd.new
+    wad.fbpac_ad = self
+    wad.text_hash = Digest::SHA1.hexdigest(clean_text)
+    wad.ad_text = create_ad_text(wad)
+    wad.save!
+    wad
+  end
+
+  def create_ad_text!(wad)
+    ad_text = AdText.find_or_initialize_by(text_hash: wad.text_hash)
+    ad_text.text ||= text
+    ad_text.search_text ||= advertiser.to_s + " " + text # TODO: consider adding CTA text, etc.
+
+    ad_text.first_seen = [ad_text.first_seen, created_at].compact.min # set the creation time to be the earliest we've seen for this text.
+    ad_text.last_seen = [ad_text.last_seen, updated_at].compact.max
+    ad_text.advertiser ||= advertiser
+    ad_text.paid_for_by ||= paid_for_by
+
+    ad_text.save!
+    ad_text
+  end
+
 
 end

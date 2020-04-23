@@ -1,0 +1,22 @@
+<h1><a href="/">Quartz Political Facebook Ads Dashboard</a></h1>
+
+<h2>How are the candidates trying to persuade swing voters?</h2>
+
+<p>Joe Biden and Donald Trump are spending many millions of dollars on online ads in hopes of winning the 2020 presidential election. But a lot of that spending isn't directly going to convince voters -- it's meant to raise money (or collect your email address, that the candidates will later use to ask your for money).</p>
+
+<p>Between persuasive ads and fundraising ads, the messaging can differ. Fundraising targets are probably hardcore supporters. Persuasion targets are voters who are on the fence about who to vote for. Turnout targets are not very likely to vote -- but if they do, they'll definitely vote for one side or the other.</p>
+
+<p>One way we can tell the difference? States. Fundraising targets can be anywhere in the country; a California dollar is the same as a Wisconsin dollar. But one extra vote in Wisconsin could swing an election. One extra vote in California means nothing.</p>
+
+<p>Quartz has analyzed Facebook's massive database of political ads and filtered out just the ads from major political spenders that are targeted just to swing states. These are probably the ads meant to persuade someone to turn out or to vote for one particular side. Check it out.</p>
+
+<div>
+  <% @grouped.each do |page_id, wads| %>
+
+    <h3><%= wads.first.ad.page.page_name %></h3>
+    <% wads.each do |wad| %>
+      <%= render "ads/ad", page_name: wads.first.ad.page.page_name, ad: wad.ad %>
+    <% end %>
+  <% end %>
+
+</div>
