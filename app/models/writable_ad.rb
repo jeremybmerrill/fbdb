@@ -28,14 +28,16 @@ class WritableAd < ApplicationRecord
   def copy_screenshot_to_s3!
     return if s3_url
     s3 = Aws::S3::Resource.new(region:'us-east-2')
-    begin 
-      img_data = RestClient.get(gcs_url)
-    rescue
-      return
+    obj = s3.bucket(BUCKET_NAME).object(s3_path)
+    unless obj.exists?
+      begin 
+        img_data = RestClient.get(gcs_url)
+      rescue
+        return
+      end
+      obj.put(body: img_data.body, acl: "public-read")
     end
     self.s3_url = generate_s3_url
-    obj = s3.bucket(BUCKET_NAME).object(s3_path)
-    obj.put(body: img_data.body, acl: "public-read")
     self.save
   end
 

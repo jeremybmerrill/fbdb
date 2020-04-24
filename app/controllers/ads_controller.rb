@@ -563,7 +563,15 @@ class AdsController < ApplicationController
     end
 
     def swing_state_ads
-        wads = WritableAd.where(:swing_state_ad => true).where("page_id not in (6756153498, 416707608450706)").includes(:ad)
+        wads = WritableAd.where(:swing_state_ad => true).where("page_id not in (6756153498, 416707608450706)").includes(ad: {impressions_record: {}}) #.includes(:fbpac_ads)
+
+
+        # get spend.                                       ad.impressions.min_spend
+        # get their ad_texts, get any matching fbpac_ads  wad.ad_text.fbpac_ads.map(&:targets).compact.first
+        # then get the targeting info.
+        # get topics from the ad_texts                    wad.ad_text.
+
+
         @grouped = wads.group_by(&:page_id).map{|page_id, page_wads| [page_id, page_wads.uniq{|wad| wad.text_hash }] }
         @grouped.sort_by!{|page_id, page_wads| ['7860876103', '153080620724', '706716899745696', '607626319739286', '1771156219840594'].include?(page_id.to_s) ? 0 : 1 }
         respond_to do |format|
@@ -591,6 +599,7 @@ class AdsController < ApplicationController
         raise unless lang.match(/[a-z][a-z]-[A-Z][A-Z]/)
         counts = Ad.connection.execute("select jsonb_array_elements(targets)->>'target' target,jsonb_array_elements(targets)->>'segment' segment, count(*) from fbpac_ads WHERE lang = 'en-US' AND political_probability > 0.70 AND suppressed = false group by jsonb_array_elements(targets)->>'segment', jsonb_array_elements(targets)->>'target' order by count(*) desc;")
         grouped = counts.to_a.group_by{|row| row["target"]}.map{|targ, rows| [targ, rows.map{|a| a["segment"] }]}
+
         respond_to do |format|
             format.json {
                 render json: {

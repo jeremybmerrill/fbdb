@@ -5,7 +5,7 @@ class Ad < ApplicationRecord
     # has_one :collector_ad, primary_key: :archive_id # for the NEW collector, not existing FBPAC.
     belongs_to :payer, foreign_key: :name, primary_key: :funding_entity
     belongs_to :page, primary_key: :page_id
-    has_many :impressions, primary_key: :archive_id, foreign_key: :archive_id
+    has_one :impressions_record, primary_key: :archive_id, foreign_key: :archive_id
     default_scope { order(:archive_id) } 
 
     has_one  :writable_ad, primary_key: :archive_id, foreign_key: :archive_id # just a proxy

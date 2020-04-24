@@ -1,13 +1,24 @@
 <div style="padding-left: 2em;">
   <h4><%= page_name %></h4>
-  <p>Paid for by <%= ad.funding_entity %></p>
+  <p>Paid for by <%= ad.funding_entity %> ($<%= ad.impressions_record.min_spend %> - <%= ad.impressions_record.max_spend %> spent)</p>
   <p><%= ad.ad_creative_body %></p>
   <% if wad.s3_url %>
     <img src="<%= wad.http_s3_url %>" alt="<%= [page_name, ad.funding_entity, ad.ad_creative_body, ad.ad_creative_link_title, ad.ad_creative_link_description, ad.ad_creative_link_caption].join(' ') %>" />
+  <% else %>
+    <p><b>No image yet, sadly.</b></p>
   <% end %>
   <p style="color: grey">see video on <a href="https://www.facebook.com/ads/library/?id=<%= ad.archive_id %>">Facebook</a></p>
   <p><%= ad.ad_creative_link_title %></p>
   <p><%= ad.ad_creative_link_description %></p>
   <p><%= ad.ad_creative_link_caption %></p>
   <p><b>Swing states:</b> <%= states.compact.join(", ") %></p>
+
+  <% if wad.ad_text.topics.size >= 1 %> 
+  <p><b>Topics:</b> <%= wad.ad_text.topics.map(&:topic) %></p>
+  <% end %>
+  <% if wad.ad_text.fbpac_ads.size >= 1 %>
+  <p><b>How was this targeted?:</b> <%= wad.ad_text.fbpac_ads.map(&:targets).compact.first %></p>
+  <% end %>
+
+
 </div>
