@@ -48,17 +48,18 @@ namespace :text do
     ads_without_text_hash = WritableAd.where("text_hash is null and archive_id is not null")
 
     ads_hashed = 0
-    new_ads.find_in_batches(batch_size: 16).map do |batch|
-        batch.map(&:create_writable_ad!).each do |wad|
-        puts "batch (new ads)"
-        wad.ad_text = wad.ad.create_ad_text!(wad)
-        wad.save
-        ads_hashed += 1
+    batch_size = 500
+    new_ads.find_in_batches(batch_size: batch_size).map do |batch|
+      puts "batch (new ads)"
+      batch.map(&:create_writable_ad!).each do |wad|
+          wad.ad_text = wad.ad.create_ad_text!(wad)
+          wad.save
+          ads_hashed += 1
       end
     end
-    ads_without_text_hash.find_in_batches(batch_size: 16).each do |batch|
+    ads_without_text_hash.find_in_batches(batch_size: batch_size).each do |batch|
+      puts "batch (ads w/o text hash)"
       batch.each do |wad|
-        puts "batch (ads w/o text hash)"
         wad.ad_text = wad.ad.create_ad_text!(wad)
         wad.save
         ads_hashed += 1
