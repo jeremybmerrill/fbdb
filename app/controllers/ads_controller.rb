@@ -325,6 +325,8 @@ class AdsController < ApplicationController
         targeting = params[:targeting].nil? ? nil : JSON.parse(params[:targeting]) # [["MinAge", 59], ["Interest", "Sean Hannity"]]
         poliprob =  params[:poliprob] ? JSON.parse(params[:poliprob]) : [70, 100]
 
+        only_fbpac = params[:only_fbpac]
+
         # if you specify an advertiser by name (as the app does as of 4/17/20), e.g. /ads/search.json?advertisers=[%22Joe%20Biden%22]&poliprob=[70,100]
         # then we have to find the page_id that matches in order to get the ads for that advertiser from the HL FBAPI DB.
         new_page_ids = Page.where(page_name: [advertiser_names]).select("page_id").map(&:page_id)
@@ -376,6 +378,10 @@ class AdsController < ApplicationController
 
             if no_payer # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
                 @fbpac_ads = @fbpac_ads.where("fbpac_ads.paid_for_by is null")
+                @api_ads = Ad.none
+            end
+
+            if only_fbpac
                 @api_ads = Ad.none
             end
 
@@ -441,8 +447,12 @@ class AdsController < ApplicationController
                 @ads = @ads.joins(:ad_topics).where("ad_topics.topic_id": topic_id)
             end
 
+            if only_fbpac
+                @ads = @ads.where("writable_ads.archive_id is null")
+            end
+
             if no_payer # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
-                @ads = @ads.where("fbpac_ads.paid_for_by is null and ads.archive_id is null")
+                @ads = @ads.where("fbpac_ads.paid_for_by is null and writable_ads.archive_id is null")
             end
 
             if targeting # this exclude all Ad instances (since this query only makes sense when dealing with Fbpac_ads)
