@@ -1,21 +1,39 @@
 <h1><a href="/">Quartz Political Facebook Ads Dashboard</a></h1>
 
-<h2>How are the candidates trying to persuade swing voters?</h2>
+<h1> THIS IS A MOCKUP </h1>
 
-<p>Joe Biden and Donald Trump are spending many millions of dollars on online ads in hopes of winning the 2020 presidential election. But a lot of that spending isn't directly going to convince voters -- it's meant to raise money (or collect your email address, that the candidates will later use to ask your for money).</p>
+<h2>Go ahead, persuade me: how campaigns are trying to persuade swing voters</h2>
 
-<p>Between persuasive ads and fundraising ads, the messaging can differ. Fundraising targets are probably hardcore supporters. Persuasion targets are voters who are on the fence about who to vote for. Turnout targets are not very likely to vote -- but if they do, they'll definitely vote for one side or the other.</p>
+<p>Joe Biden and Donald Trump are spending many millions of dollars on online ads in hopes of winning the 2020 presidential election. So are outside groups. But a lot of that spending isn't directly going to convince voters -- it's meant to raise money (or collect your email address, that the candidates will later use to ask your for money).</p>
 
-<p>One way we can tell the difference? States. Fundraising targets can be anywhere in the country; a California dollar is the same as a Wisconsin dollar. But one extra vote in Wisconsin could swing an election. One extra vote in California means nothing.</p>
+<p>Messaging differs between persuasive ads and fundraising ads, the messaging can differ. Fundraising targets get fed red meat on guns, abortion, the latest outrage.<p>
 
-<p>Quartz has analyzed Facebook's massive database of political ads and filtered out just the ads from major political spenders that are targeted just to swing states. These are probably the ads meant to persuade someone to turn out or to vote for one particular side. Check it out.</p>
+<p>On the other hand, persuasion targets are voters who are on the fence about who to vote for. Turnout targets are not very likely to vote -- but if they do, they'll definitely vote for one side or the other. Both groups may not be super plugged into the news.</p>
+
+<p>That's where you'll see the first hints of new messages: Trump trying to paint Biden as too close to China, for instance. LINKTK.</p>
+
+<p>We've highlighted ads we're pretty sure are meant for either persuasion or turnout targets. Ordinarily, you'd only see this if you live in a swing state and turn on the TV -- or if you are someone whose personal data indicates you're a persuasion or turnout target.</p>
+
+<p>Quartz has analyzed Facebook's massive database of political ads and filtered out just the ads from major political spenders that are targeted just to swing states. These are probably the ads meant to persuade someone to turn out or to vote for one particular side. Fundraising targets can be anywhere in the country; a Rhode Island dollar is the same as a Wisconsin dollar. But one extra vote in Wisconsin could swing an election. One extra vote in deep-blue Rhode Island means nothing.</p>
+
+<p>Check it out.</p>
+
+<p>As the election draws nigh, we'll use artificial intelligence techniques to read these ads (and watch the videos) to summarize what the campaigns are saying to different voters, like if Biden's message focuses on the coronavirus response and Trump's on China. If we can, we'll try to isolate what they're saying to suburban moms versus blue-collar union men and so forth.</p>
+
+TODO:
+<ul>
+  <li>lets get some fundraising ads for comparison too.</li>
+  <li>maybe a tabbed view so people can see Trump & Biden / Dem groups / GOP groups?.</li>
+  <li>credit portions of the data to Laura's project</li>
+  <li>show topic breakdowns by party, e.g. "Dems: 80% coronavirus, 20% healthcare generally; GOP: 100% China" (or whatever)</li>
+</ul>
 
 <div>
   <% @grouped.each do |page_id, wads| %>
 
     <h3><%= wads.first.ad.page.page_name %></h3>
     <% wads.each do |wad| %>
-      <%= render "ads/ad", page_name: wads.first.ad.page.page_name, ad: wad.ad %>
+      <%= render "ads/ad", page_name: wads.first.ad.page.page_name, wad: wad, ad: wad.ad, states: wad.states %>
     <% end %>
   <% end %>
 

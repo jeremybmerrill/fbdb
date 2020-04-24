@@ -12,7 +12,7 @@
 /db/*.sqlite3-journal
 
 
-db/structure.sql
+/db/structure.sql
 
 # Ignore all logfiles and tempfiles.
 /log/*

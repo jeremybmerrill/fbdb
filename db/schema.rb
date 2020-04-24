@@ -10,17 +10,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_23_144433) do
+ActiveRecord::Schema.define(version: 2020_04_24_154328) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "postgres_fdw"
   enable_extension "unaccent"
-
-
-  # you also have to set up this trigger:
-  # CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE ON public.ad_texts FOR EACH ROW EXECUTE FUNCTION tsvector_update_trigger('tsv', 'pg_catalog.english', 'search_text');
-  # and potentially various tables are remote via postgres_fdw.
 
   create_table "ad_archive_report_pages", force: :cascade do |t|
     t.bigint "page_id"
@@ -239,6 +234,8 @@ ActiveRecord::Schema.define(version: 2020_04_23_144433) do
     t.text "ad_id"
     t.bigint "page_id"
     t.boolean "swing_state_ad"
+    t.text "states", default: [], array: true
+    t.text "s3_url"
     t.index ["ad_id"], name: "index_writable_ads_on_ad_id"
     t.index ["archive_id"], name: "index_writable_ads_on_archive_id"
     t.index ["page_id"], name: "index_writable_ads_on_page_id"

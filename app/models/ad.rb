@@ -69,7 +69,6 @@ class Ad < ApplicationRecord
     def create_writable_ad!
       wad = WritableAd.new
       wad.archive_id = archive_id
-      puts self.inspect
       wad.page_id = page_id
       wad.save!
       wad

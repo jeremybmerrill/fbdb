@@ -565,6 +565,7 @@ class AdsController < ApplicationController
     def swing_state_ads
         wads = WritableAd.where(:swing_state_ad => true).where("page_id not in (6756153498, 416707608450706)").includes(:ad)
         @grouped = wads.group_by(&:page_id).map{|page_id, page_wads| [page_id, page_wads.uniq{|wad| wad.text_hash }] }
+        @grouped.sort_by!{|page_id, page_wads| ['7860876103', '153080620724', '706716899745696', '607626319739286', '1771156219840594'].include?(page_id.to_s) ? 0 : 1 }
         respond_to do |format|
             format.json {
                 render json: {
