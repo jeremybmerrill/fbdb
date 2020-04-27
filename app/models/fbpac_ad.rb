@@ -68,7 +68,7 @@ class FbpacAd < ApplicationRecord
     wad = WritableAd.new
     wad.fbpac_ad = self
     wad.text_hash = Digest::SHA1.hexdigest(clean_text)
-    wad.ad_text = create_ad_text(wad)
+    wad.ad_text = create_ad_text!(wad)
     wad.save!
     wad
   end

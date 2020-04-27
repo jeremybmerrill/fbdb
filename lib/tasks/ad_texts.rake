@@ -52,7 +52,7 @@ namespace :text do
     new_ads.find_in_batches(batch_size: batch_size).map do |batch|
       puts "batch (new ads)"
       batch.map(&:create_writable_ad!).each do |wad|
-          wad.ad_text = wad.ad.create_ad_text!(wad)
+          wad.ad_text = wad.ad&.create_ad_text!(wad)
           wad.save
           ads_hashed += 1
       end
