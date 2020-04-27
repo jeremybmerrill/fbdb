@@ -573,17 +573,16 @@ class AdsController < ApplicationController
     end
 
     def swing_state_ads
-        wads = WritableAd.where(:swing_state_ad => true).where("page_id not in (6756153498, 416707608450706)").includes(ad: {impressions_record: {}}) #.includes(:fbpac_ads)
+        wads = WritableAd.where(:swing_state_ad => true).where("page_id not in (6756153498, 416707608450706)").includes(ad: {impressions_record: {}}, ad_text: {})
 
+        # really what we want is the AdText model.
+        # so we can show each ad only once (merging the state and target lists)
 
-        # get spend.                                       ad.impressions.min_spend
-        # get their ad_texts, get any matching fbpac_ads  wad.ad_text.fbpac_ads.map(&:targets).compact.first
-        # then get the targeting info.
-        # get topics from the ad_texts                    wad.ad_text.
+        @page_names = {}
 
-
-        @grouped = wads.group_by(&:page_id).map{|page_id, page_wads| [page_id, page_wads.uniq{|wad| wad.text_hash }] }
-        @grouped.sort_by!{|page_id, page_wads| ['7860876103', '153080620724', '706716899745696', '607626319739286', '1771156219840594'].include?(page_id.to_s) ? 0 : 1 }
+        @grouped = wads.group_by(&:page_id).map{|page_id, page_wads| [page_id, page_wads.group_by{|wad| wad.text_hash }] }
+        @grouped.each{|page_id, page_wads| @page_names[page_id] ||= page_wads.values.first.first.ad.page.page_name }
+        @grouped.sort_by!{|page_id, text_hash_page_wads| ['7860876103', '153080620724', '706716899745696', '607626319739286', '1771156219840594'].include?(page_id.to_s) ? 0 : 1 }
         respond_to do |format|
             format.json {
                 render json: {

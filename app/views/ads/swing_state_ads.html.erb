@@ -29,11 +29,15 @@ TODO:
 </ul>
 
 <div>
-  <% @grouped.each do |page_id, wads| %>
-
-    <h3><%= wads.first.ad.page.page_name %></h3>
-    <% wads.each do |wad| %>
-      <%= render "ads/ad", page_name: wads.first.ad.page.page_name, wad: wad, ad: wad.ad, states: wad.states %>
+  <% @grouped.each do |page_id, text_hash_page_wads| %>
+    <h3><%= @page_names[page_id] %></h3>
+    <% text_hash_page_wads.each do |text_hash, wads| %>
+      <%= render "ads/ad", 
+            page_name: @page_names[page_id], 
+            wad: wads.first, 
+            ad: wads.first.ad, 
+            wads: wads,
+            states: wads.map{|wad| wad.states}.flatten.uniq %>
     <% end %>
   <% end %>
 
