@@ -49,7 +49,7 @@ class FbpacAd < ApplicationRecord
   end
 
 
-  USERS_COUNT = 2442 + 5420
+  USERS_COUNT = 2424 + 5551
   def self.calculate_homepage_stats(lang) # internal only!
       political_ads_count = FbpacAd.where(lang: lang).where("political_probability > 0.70").count
       political_ads_today = FbpacAd.where(lang: lang).where("political_probability > 0.70").unscope(:order).where("created_at AT TIME ZONE 'America/New_York' > now() - interval '1 day' ").count
