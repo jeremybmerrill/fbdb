@@ -48,7 +48,7 @@ namespace :text do
     ads_without_text_hash = WritableAd.where("text_hash is null and archive_id is not null")
 
     ads_hashed = 0
-    batch_size = 500
+    batch_size = 5000
     new_ads.find_in_batches(batch_size: batch_size).map do |batch|
       puts "batch (new ads)"
       batch.map(&:create_writable_ad!).each do |wad|
