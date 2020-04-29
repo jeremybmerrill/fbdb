@@ -9,8 +9,7 @@ namespace :topics do
 
     WritablePage.where(core: true).each do |wpage|
       wpage.ad_texts.find_in_batches(batch_size: 16) do |texts|
-        puts "starting"
-        counter += texts.size
+          counter += texts.size
         retried = 0
         begin
           AdText.classify_topic(texts)
@@ -24,7 +23,6 @@ namespace :topics do
     end
 
     AdText.includes(:ad_topics).joins(writable_ads: [:fbpac_ad]).search_for("biden OR trump").where( :ad_topics => { :ad_text_id => nil } ).find_in_batches(batch_size: 16) do |texts|
-      puts "starting"
       counter += texts.size
       retried = 0
       begin

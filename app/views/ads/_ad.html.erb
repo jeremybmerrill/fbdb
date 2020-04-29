@@ -1,6 +1,7 @@
 <div style="padding-left: 2em;">
   <h4><%= page_name %></h4>
-  <p>Paid for by <%= ad.funding_entity %> ($<%= wads.map{|wad| wad.ad.impressions_record.min_spend}.reduce(&:+) %> - <%= wads.map{|wad| wad.ad.impressions_record.max_spend}.reduce(&:+) %> spent)</p>
+  <p>Paid for by <%= ad.funding_entity %> ($<%= number_with_delimiter(wads.map{|wad| wad.ad.impressions_record.min_spend}.reduce(&:+)) %> - <%= number_with_delimiter(wads.map{|wad| wad.ad.impressions_record.max_spend}.reduce(&:+)) %> spent)</p>
+  <p>impressions: <%= number_with_delimiter(wads.map{|wad| wad.ad.impressions_record.min_impressions}.reduce(&:+)) %> - <%= number_with_delimiter(wads.map{|wad| wad.ad.impressions_record.max_impressions}.reduce(&:+)) %></p>
   <p><%= ad.ad_creative_body %></p>
   <% if wad.s3_url %>
     <img src="<%= wad.http_s3_url %>" alt="<%= [page_name, ad.funding_entity, ad.ad_creative_body, ad.ad_creative_link_title, ad.ad_creative_link_description, ad.ad_creative_link_caption].join(' ') %>" />
@@ -16,7 +17,7 @@
   <% if wad.ad_text.topics.reject{|text| text == "none"}.size >= 1 %> 
     <p><b>Topics:</b> <%= wad.ad_text.topics.reject{|text| text == "none"}.map(&:topic) %></p>
   <% end %>
-  <% if wad.ad_text.fbpac_ads.size >= 1 && wad.ad.ad_creative_body != '' %>
+  <% if wad.ad_text.fbpac_ads.size >= 1 && ad.ad_creative_body %>
     <p><b>How was this targeted?:</b> <%= wad.ad_text.fbpac_ads.map(&:targets).compact.first %></p>
   <% end %>
 </div>

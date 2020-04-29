@@ -22,11 +22,24 @@
 
 TODO:
 <ul>
-  <li>lets get some fundraising ads for comparison too.</li>
+  <li>lets get some fundraising ads for comparison too (e.g. <a href="https://www.facebook.com/ads/library/?id=552666988990385">Biden on gun control</a>).</li>
   <li>maybe a tabbed view so people can see Trump & Biden / Dem groups / GOP groups?.</li>
   <li>credit portions of the data to Laura's project</li>
-  <li>show topic breakdowns by party, e.g. "Dems: 80% coronavirus, 20% healthcare generally; GOP: 100% China" (or whatever)</li>
 </ul>
+
+<div>
+  <h3>Topics by party</h3>
+  <% @partisanship_topic_proportions.each do |partisanship, topic_proportions| %>
+    <% next if partisanship == "other" %>
+    <h4><%= partisanship %></h4>
+    <ul>
+      <% topic_proportions.each do |topic, proportion| %>
+        <% next if proportion <  0.02 %>
+        <li><%= topic == "none" ? "unknown/other" : topic %>: <%= (proportion * 100).to_i %>%</li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>
 
 <div>
   <% @grouped.each do |page_id, text_hash_page_wads| %>

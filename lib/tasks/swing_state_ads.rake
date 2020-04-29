@@ -31,7 +31,7 @@ namespace :swing_states do
         ENV["SLACKWH"],
         JSON.dump({"text" => "(8/8): found #{count} swing state ads" }),
         {:content_type => "application/json"}
-    ) if counter > 0 && ENV["SLACKWH"]
+    ) if count > 0 && ENV["SLACKWH"]
   end
   task clear: :environment do 
     WritableAd.update_all(swing_state_ad: false)

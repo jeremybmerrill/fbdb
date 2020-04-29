@@ -573,16 +573,27 @@ class AdsController < ApplicationController
     end
 
     def swing_state_ads
-        wads = WritableAd.where(:swing_state_ad => true).where("page_id not in (6756153498, 416707608450706)").includes(ad: {impressions_record: {}}, ad_text: {})
+        wads = WritableAd.where(:swing_state_ad => true).where("page_id not in (6756153498, 416707608450706)").includes(ad: {impressions_record: {}}, ad_text: {topics: {}}, writable_page: {})
 
         # really what we want is the AdText model.
         # so we can show each ad only once (merging the state and target lists)
 
-        @page_names = {}
+
+
+        partisanship_topic_counts = wads.map{|wad| wad.ad_text.topics.reject{|text| text == "none"}.map{|topic| [wad.writable_page.partisanship, topic.topic] } }.flatten(1).group_by{|partisanship, topic| partisanship}.map{|partisanship, topics| [partisanship, topics.group_by{|_, topic| topic }.map{|topic, rows| [topic, rows.count]}] }
+        partisanship_ad_counts = Hash[*wads.group_by{|wad| wad.writable_page.partisanship }.map{|partisanship, rows| [partisanship, rows.count]}.flatten]
+        @partisanship_topic_proportions = {}
+        partisanship_topic_counts.each{|partisanship, topic_counts| topic_counts.each{|topic, count| @partisanship_topic_proportions[partisanship] ||= {}; @partisanship_topic_proportions[partisanship][topic] = count.to_f / partisanship_ad_counts[partisanship] }}
+        # {"dem": {"China": 0.5, "Immigration": 0.2}}
+
+
 
         @grouped = wads.group_by(&:page_id).map{|page_id, page_wads| [page_id, page_wads.group_by{|wad| wad.text_hash }] }
+
+        @page_names = {}
         @grouped.each{|page_id, page_wads| @page_names[page_id] ||= page_wads.values.first.first.ad.page.page_name }
         @grouped.sort_by!{|page_id, text_hash_page_wads| ['7860876103', '153080620724', '706716899745696', '607626319739286', '1771156219840594'].include?(page_id.to_s) ? 0 : 1 }
+
         respond_to do |format|
             format.json {
                 render json: {

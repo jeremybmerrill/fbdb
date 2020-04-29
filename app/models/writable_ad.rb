@@ -7,6 +7,7 @@ class WritableAd < ApplicationRecord
   belongs_to :fbpac_ad, primary_key: :id, foreign_key: :ad_id, optional: true
 #  belongs_to :collector_ad
   belongs_to :page, primary_key: :page_id, foreign_key: :page_id, optional: true
+  belongs_to :writable_page, primary_key: :page_id, foreign_key: :page_id, optional: true
 
 
   # for screenshots derived from Laura's DB.
