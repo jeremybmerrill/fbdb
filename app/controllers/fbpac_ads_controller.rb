@@ -7,6 +7,60 @@ class FbpacAdsController < ApplicationController
     caches_action :persona, expires_in: 30.minutes, :cache_path => Proc.new {|c|  c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";") }
 
 
+
+
+    TIME_UNITS = ["day", "week", "month", "year", "electioncycle"]
+    PIVOT_SELECTS = {
+        "targets" => "jsonb_array_elements(targets)->>'target'",
+        "segments" => "array[jsonb_array_elements(targets)->>'target', jsonb_array_elements(targets)->>'segment']",
+        "paid_for_by" => "paid_for_by",
+        "advertiser" => "advertiser"
+    }
+    def pivot
+        # time_unit: ["day", "week", "month", "year", "electioncycle"]
+        # time_count: integers
+        # kind: "targets" "segments" "paid_for_by" "advertiser"
+        # first_seen: true/false
+        lang = params[:lang] || "en-US"
+        @time_unit = params[:time_unit]
+        raise if @time_unit && !TIME_UNITS.include?(@time_unit)
+        @time_count = params[:time_count].to_i
+        if @time_unit == "electioncycle"
+            time_string = "'2019-11-17'" # after the Louisiana special
+        else
+            time_string = "NOW() - interval '#{@time_count} #{@time_unit}'"
+        end
+
+        @kind_of_thing = params[:kind]
+        @first_seen = params[:first_seen] || false
+
+        ads = FbpacAd.where("political_probability > 0.70 and suppressed = false").where(lang: lang).where("targets is not null")
+        if (@time_count && @time_unit)
+            if @first_seen
+                ads = ads.having("min(created_at) > #{time_string}")
+            else
+                ads = ads.where("created_at > #{time_string}")
+            end
+        end
+        @pivot = ads.unscope(:order).group(PIVOT_SELECTS[@kind_of_thing]).order("count_all desc").count
+        respond_to do |format|
+            format.html
+            format.json {
+                render json: @pivot #Hash[*pivot.map{|k, v| {paid_for_by: k, count: v} }]
+            }
+        end
+
+    end
+
+    def list_uploaders
+        # list of List Uploaders used by each advertiser
+        # select advertiser, array_agg(distinct segment) from (select advertiser, jsonb_array_elements(targets) ->> 'target' target, jsonb_array_elements(targets) ->> 'segment' segment from fbpac_ads where targets @> '[{"target": "Audience Owner"}]' and advertiser is not null and political_probability > 0.7) q where target = 'Audience Owner' group by advertiser;
+
+        # list of advertisers who use each List Uploader
+        # select segment, array_agg(distinct advertiser) from (select advertiser, jsonb_array_elements(targets) ->> 'target' target, jsonb_array_elements(targets) ->> 'segment' segment from fbpac_ads where targets @> '[{"target": "Audience Owner"}]' and advertiser is not null and political_probability > 0.7) q where target = 'Audience Owner' group by segment;
+    end
+
+
     GENDERS_FB = ["men", "women"]
     MAX_PAGE = 50
     def persona
