@@ -344,7 +344,9 @@ class AdsController < ApplicationController
 
             if search
                 @fbpac_ads = @fbpac_ads.search_for(search)
+                @fbpac_ads.reorder('')
                 @api_ads   = @api_ads.search_for(search)
+                @api_ads.reorder('')
             end
 
             if page_ids.size + advertiser_names.size > 0  # can be either a number or an advertiser
@@ -412,7 +414,6 @@ class AdsController < ApplicationController
             # APR17: .includes(writable_ads: [:fbpac_ad, :ad], topics: {}) was here
             @ads = AdText.left_outer_joins(writable_ads: [:fbpac_ad]).where("fbpac_ads.lang = ? or writable_ads.archive_id is not null", lang) # ad_texts need lang (or country)
             
-            @ads = @ads.order("ad_texts.first_seen desc")
 
             # it's better to sort by date, always (rather than relevance.)
             # if we search for a term, we're often looking for ads that contain the term
@@ -421,6 +422,7 @@ class AdsController < ApplicationController
             if search
                 @ads = @ads.search_for(search) # TODO maybe this should be by date too.
             end
+            @ads = @ads.reorder("ad_texts.first_seen desc")
 
 
             if page_ids.size + advertiser_names.size > 0  # can be either a number or an advertiser
@@ -465,10 +467,8 @@ class AdsController < ApplicationController
             # N.B. this is not distinct because SQL complains about 
             # having the ordering (on date) on something that's been discarded for the ordering.
             # the join is funny because each text_hash can join to multiple writable_ads (one for fbpac_ad and one for regular ad)
-            @ads = @ads.includes(:writable_ads, topics: {}).paginate(page: params[:page], per_page: PAGE_SIZE, total_entries: PAGE_SIZE * 20) #.includes(writable_ads: [:fbpac_ad, :ad])
+            @ads = @ads.distinct.includes(:writable_ads, topics: {}).paginate(page: params[:page], per_page: PAGE_SIZE, total_entries: PAGE_SIZE * 20) #.includes(writable_ads: [:fbpac_ad, :ad])
             # count queries on this join are hella expensive
-
-
         end
 
         respond_to do |format|
