@@ -44,7 +44,8 @@ namespace :text do
     end
 
     new_ads = Ad.left_outer_joins(:writable_ad).where(writable_ads: {archive_id: nil}). # ads that don't have a writable ad or whose writable ad doesn't have a text hash in it
-      where(page_id: top_advertiser_page_ids) # FOR NOW, limited to the top handful of advertisers
+      # where(page_id: top_advertiser_page_ids) # FOR NOW, limited to the top handful of advertisers
+            where("ad_creation_time > '2020-04-01'")
     ads_without_text_hash = WritableAd.where("text_hash is null and archive_id is not null")
 
     ads_hashed = 0
