@@ -48,7 +48,7 @@ namespace :ad_archive_report do
         all_dates_btn.click
         sleep 1
 
-        download_button = driver.find_element(css: 'div[data-testid="download_button"]')
+        download_button = driver.find_elements(css: 'a div').find{|btn| btn.text == "Download Report"}
         download_button.click
 
         sleep 10 # time to *actually* download it.
