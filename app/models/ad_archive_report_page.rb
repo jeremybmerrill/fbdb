@@ -9,7 +9,7 @@ class AdArchiveReportPage < ApplicationRecord
     end	
 
     def ad_library_url
-		url = "https://www.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=US&impression_search_field=has_impressions_lifetime&q=#{page_name}"
+		url = "https://www.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=US&impression_search_field=has_impressions_lifetime&q=#{page_name}&page_ids[0]=#{page_id}"
 		url += "&disclaimer_texts[0]=#{disclaimer}" if has_disclaimer?
 		url
     end
