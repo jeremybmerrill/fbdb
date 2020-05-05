@@ -3,8 +3,8 @@
 # throw it against the topic endpoint TOPICS_URL
 
 
-namespace :topics do 
-  task ads: :environment do 
+namespace :text do 
+  task topics: :environment do 
     counter = 0
 
     WritablePage.where(core: true).each do |wpage|
