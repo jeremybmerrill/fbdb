@@ -467,9 +467,11 @@ class AdsController < ApplicationController
             # N.B. this is not distinct because SQL complains about 
             # having the ordering (on date) on something that's been discarded for the ordering.
             # the join is funny because each text_hash can join to multiple writable_ads (one for fbpac_ad and one for regular ad)
-            @ads = @ads.distinct.includes(:writable_ads, topics: {}).paginate(page: params[:page], per_page: PAGE_SIZE, total_entries: PAGE_SIZE * 20) #.includes(writable_ads: [:fbpac_ad, :ad])
+            @ads = @ads.select("distinct on (ad_texts.first_seen, ad_texts.text_hash) ad_texts.*").includes(:writable_ads, topics: {}).paginate(page: params[:page], per_page: PAGE_SIZE, total_entries: PAGE_SIZE * 20) #.includes(writable_ads: [:fbpac_ad, :ad])
             # count queries on this join are hella expensive
         end
+
+        api_ads_for_join = Ad.find(@ads.map{|ad_text| ad_text.writable_ads.find{|wad| wad.archive_id }.archive_id })
 
         respond_to do |format|
             format.html 
@@ -478,7 +480,7 @@ class AdsController < ApplicationController
                     # because counts are very expensive, we are faking pagination and display one additional page if there's exactly PAGE_SIZE items returned by the current page
                     n_pages: @ads.to_a.size == PAGE_SIZE ? ([params[:page].to_i + 1, 2].max) : (params[:page] || 1),
                     page: params[:page] || 1,
-                    ads: @ads.as_json(include: {writable_ads: {} }),
+                    ads: @ads.as_json({include: {writable_ads: {} }, ads: api_ads_for_join}),
                 }
              }
         end
@@ -585,8 +587,6 @@ class AdsController < ApplicationController
         @partisanship_topic_proportions = {}
         partisanship_topic_counts.each{|partisanship, topic_counts| topic_counts.each{|topic, count| @partisanship_topic_proportions[partisanship] ||= {}; @partisanship_topic_proportions[partisanship][topic] = count.to_f / partisanship_ad_counts[partisanship] }}
         # {"dem": {"China": 0.5, "Immigration": 0.2}}
-
-
 
         @grouped = wads.group_by(&:page_id).map{|page_id, page_wads| [page_id, page_wads.group_by{|wad| wad.text_hash }] }
 
