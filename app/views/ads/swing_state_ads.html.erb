@@ -24,6 +24,8 @@ TODO:
 <ul>
   <li>lets get some fundraising ads for comparison too (e.g. <a href="https://www.facebook.com/ads/library/?id=552666988990385">Biden on gun control</a>).</li>
   <li>maybe a tabbed view so people can see Trump & Biden / Dem groups / GOP groups?.</li>
+  <li>sort newer ads to the top (include start date)</li>
+  <li>count/chart spend per party (and per state)</li>
   <li>credit portions of the data to Laura's project</li>
 </ul>
 
@@ -40,6 +42,18 @@ TODO:
     </ul>
   <% end %>
 </div>
+
+<div>
+  <h3>minimum spend by party</h3>
+  <ul>
+  <% @partisanship_spend.each do |partisanship, min_spend, max_spend| %>
+    <% next if partisanship == "other" %>
+        <li><%= partisanship %>: $<%= number_with_delimiter(min_spend) %> - <%= number_with_delimiter(max_spend) %></li>
+  <% end %>
+  </ul>
+  <p>we could do per state, or is that too in the weeds?</p>
+</div>
+
 
 <div>
   <% @grouped.each do |page_id, text_hash_page_wads| %>

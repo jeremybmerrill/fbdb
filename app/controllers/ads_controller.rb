@@ -588,6 +588,8 @@ class AdsController < ApplicationController
         partisanship_topic_counts.each{|partisanship, topic_counts| topic_counts.each{|topic, count| @partisanship_topic_proportions[partisanship] ||= {}; @partisanship_topic_proportions[partisanship][topic] = count.to_f / partisanship_ad_counts[partisanship] }}
         # {"dem": {"China": 0.5, "Immigration": 0.2}}
 
+        @partisanship_spend = wads.group_by{|wad| wad.writable_page.partisanship }.map{|partisanship, wads| [partisanship, wads.map{|wad| wad.ad.impressions_record.min_spend }.reduce(&:+), wads.map{|wad| wad.ad.impressions_record.max_spend }.reduce(&:+)] }
+
         @grouped = wads.group_by(&:page_id).map{|page_id, page_wads| [page_id, page_wads.group_by{|wad| wad.text_hash }] }
 
         @page_names = {}
