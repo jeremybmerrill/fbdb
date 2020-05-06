@@ -223,7 +223,7 @@ namespace :ad_archive_report do
                     duration_days: days_diff,
                     is_new: is_new
                 ) 
-                puts biggie
+                # puts biggie
             end
         end
     end
