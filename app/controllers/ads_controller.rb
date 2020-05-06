@@ -464,14 +464,14 @@ class AdsController < ApplicationController
                 @ads = @ads.where("fbpac_ads.targets @> ? and writable_ads.archive_id is null",  JSON.dump(targeting.map{|a, b| b ? {target: a.to_s, segment: b.to_s} : {target: a.to_s} }))
             end
 
-            # N.B. this is not distinct because SQL complains about 
+            # N.B. this WAS not distinct because SQL complains about 
             # having the ordering (on date) on something that's been discarded for the ordering.
             # the join is funny because each text_hash can join to multiple writable_ads (one for fbpac_ad and one for regular ad)
             @ads = @ads.select("distinct on (ad_texts.first_seen, ad_texts.text_hash) ad_texts.*").includes(:writable_ads, topics: {}).paginate(page: params[:page], per_page: PAGE_SIZE, total_entries: PAGE_SIZE * 20) #.includes(writable_ads: [:fbpac_ad, :ad])
             # count queries on this join are hella expensive
         end
 
-        api_ads_for_join = Ad.find(@ads.map{|ad_text| ad_text.writable_ads.find{|wad| wad.archive_id }.archive_id })
+        api_ads_for_join = Ad.find(@ads.map{|ad_text| ad_text.writable_ads.find{|wad| wad.archive_id }&.archive_id }.compact)
 
         respond_to do |format|
             format.html 
@@ -587,6 +587,7 @@ class AdsController < ApplicationController
         @partisanship_topic_proportions = {}
         partisanship_topic_counts.each{|partisanship, topic_counts| topic_counts.each{|topic, count| @partisanship_topic_proportions[partisanship] ||= {}; @partisanship_topic_proportions[partisanship][topic] = count.to_f / partisanship_ad_counts[partisanship] }}
         # {"dem": {"China": 0.5, "Immigration": 0.2}}
+        @partisanship_topic_proportions = @partisanship_topic_proportions.map{|partisanship, topic_proportions| [partisanship, topic_proportions.sort_by{|topic, prop| -prop}]}
 
         @partisanship_spend = wads.group_by{|wad| wad.writable_page.partisanship }.map{|partisanship, wads| [partisanship, wads.map{|wad| wad.ad.impressions_record.min_spend }.reduce(&:+), wads.map{|wad| wad.ad.impressions_record.max_spend }.reduce(&:+)] }
 
