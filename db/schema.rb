@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_29_161201) do
+ActiveRecord::Schema.define(version: 2020_05_05_211341) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -55,6 +55,7 @@ ActiveRecord::Schema.define(version: 2020_04_29_161201) do
     t.datetime "first_seen"
     t.datetime "last_seen"
     t.index ["advertiser"], name: "index_ad_texts_on_advertiser"
+    t.index ["first_seen", "text_hash"], name: "index_ad_texts_on_first_seen_and_text_hash", order: { first_seen: :desc }
     t.index ["first_seen"], name: "index_ad_texts_on_first_seen"
     t.index ["last_seen"], name: "index_ad_texts_on_last_seen"
     t.index ["page_id"], name: "index_ad_texts_on_page_id"
