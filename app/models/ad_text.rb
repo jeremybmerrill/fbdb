@@ -36,7 +36,11 @@ class AdText < ApplicationRecord
       json = super(options)
       fbpac_ad = json["writable_ads"].find{|wad| wad.has_key?("fbpac_ad")}&.dig("fbpac_ad") || {}
       fbapi_ad_id = json["writable_ads"].find{|wad| wad["archive_id"]}&.dig("archive_id")
-      fbapi_ad = fbapi_ad_id ? options[:ads].find{|ad| ad.archive_id == fbapi_ad_id}.as_json(includes: []) : {}
+      if options[:ads]
+        fbapi_ad = fbapi_ad_id ? options[:ads].find{|ad| ad.archive_id == fbapi_ad_id}.as_json(includes: []) : {}
+      else
+        fbapi_ad = fbapi_ad_id ? Ad.find(fbapi_ad_id).as_json(includes: []) : {}
+      end
 
       topics = json.extract!("topics")
       new_json = json["writable_ads"].first.dup.without("ad", "fbpac_ad").merge(fbpac_ad.merge(fbapi_ad)).merge(topics)
@@ -49,7 +53,13 @@ class AdText < ApplicationRecord
       # Ad lookups (from the HL server takes 130ms each)
       # So we only do it if we dont' have any FBPAC examples.
       new_json["variants"] = json["writable_ads"].select{|wad| wad.has_key?("fbpac_ad")}.first(3).map{|ad| ad["fbpac_ad"]}
-      new_json["variants"] = json["writable_ads"].select{|ad| ad["archive_id"]}.first(1).map{|ad| options[:ads].find{|ad| ad.archive_id == ad["archive_id"]}  } if new_json["variants"].size == 0
+      new_json["variants"] = json["writable_ads"].select{|ad| ad["archive_id"]}.first(1).map do |ad| 
+        if options[:ads]
+          options[:ads].find{|other_ad| other_ad.archive_id == ad["archive_id"]}
+        else
+          Ad.find(ad["archive_id"])
+        end
+      end if new_json["variants"].size == 0
 
       new_json
   end
