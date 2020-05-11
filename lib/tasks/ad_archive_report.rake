@@ -178,11 +178,20 @@ namespace :ad_archive_report do
     MINIMUM_EXISTING_ADVERTISER_ALERT_AMOUNT = 10000
 
     task daily: :environment do 
+        start = Time.now
         Rake::Task['ad_archive_report:download_lifelong'].execute rescue nil # sometimes fails
         Rake::Task['ad_archive_report:download_daily'].execute rescue nil # sometimes fails
         Rake::Task['ad_archive_report:add_reports'].execute
         Rake::Task['ad_archive_report:load'].execute
         Rake::Task['ad_archive_report:bigspenders'].execute
+
+
+        job = Job.find_by(name: "ad_archive_report:daily")
+        job_run = job.job_runs.create({
+          start_time: start,
+          end_time: Time.now,
+          success: true,
+        })
 
         RestClient.post(
                 ENV["SLACKWH"],
@@ -226,5 +235,8 @@ namespace :ad_archive_report do
                 # puts biggie
             end
         end
+
+
+
     end
 end

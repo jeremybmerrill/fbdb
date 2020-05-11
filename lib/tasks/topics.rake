@@ -6,7 +6,7 @@
 namespace :text do 
   task topics: :environment do 
     counter = 0
-
+    start = Time.now
     WritablePage.where(core: true).each do |wpage|
       wpage.ad_texts.find_in_batches(batch_size: 16) do |texts|
           counter += texts.size
@@ -34,6 +34,13 @@ namespace :text do
       end
       puts "successful batch -- #{counter}"
     end
+
+    job = Job.find_by(name: "text:topics")
+    job_run = job.job_runs.create({
+      start_time: start,
+      end_time: Time.now,
+      success: true,
+    })
 
 
     RestClient.post(

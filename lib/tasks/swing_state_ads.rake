@@ -7,7 +7,7 @@ LEANS = ["Maine", "Minnesota", "New Hampshire", "Georgia", "Texas"]
 
 namespace :swing_states do 
   task get: :environment do 
-    
+    start = Time.now
     count = 0
 
     old_swing_state_ads = Set.new(WritableAd.where(swing_state_ad: true).select("archive_id").map(&:archive_id))
@@ -44,6 +44,13 @@ namespace :swing_states do
 
     msg = "(7/7): found #{count} swing state ads; #{stopped_being_swing_state_ads} stopped being swing state ads; #{new_advertisers_text}"
     puts msg
+
+    job = Job.find_by(name: "swing_states:get")
+    job_run = job.job_runs.create({
+      start_time: start,
+      end_time: Time.now,
+      success: true,
+    })
 
     RestClient.post(
         ENV["SLACKWH"],

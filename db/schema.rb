@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_05_211341) do
+ActiveRecord::Schema.define(version: 2020_05_08_174349) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -29,6 +29,7 @@ ActiveRecord::Schema.define(version: 2020_05_05_211341) do
     t.integer "ads_this_tranche"
     t.integer "spend_this_tranche"
     t.integer "amount_spent_since_start_date"
+    t.index ["ad_archive_report_id", "page_id", "disclaimer"], name: "index_aarps_aar_id_page_id_discl"
     t.index ["ad_archive_report_id", "page_id"], name: "index_ad_archive_report_pages_on_ad_archive_report_id_page_id"
   end
 
@@ -170,6 +171,23 @@ ActiveRecord::Schema.define(version: 2020_05_05_211341) do
     t.bigint "nyu_id", default: -> { "nextval('impressions_nyu_id1_seq'::regclass)" }, null: false
     t.index ["ad_archive_id"], name: "impressions_archive_id_idx"
     t.index ["ad_archive_id"], name: "impressions_unique_ad_archive_id", unique: true
+  end
+
+  create_table "job_runs", force: :cascade do |t|
+    t.integer "job_id"
+    t.datetime "start_time"
+    t.datetime "end_time"
+    t.boolean "success"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "jobs", force: :cascade do |t|
+    t.string "name"
+    t.integer "expected_run_rate"
+    t.decimal "estimated_duration"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "pages_local", id: false, force: :cascade do |t|

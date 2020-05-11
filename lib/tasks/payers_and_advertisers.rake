@@ -1,6 +1,7 @@
 namespace :denormalize do
   desc "create objects for Payers in the DB, denormalizing DB"
   task payers: :environment do
+    start = Time.now
     existing_payers = Set.new(Payer.select(:name).map(&:name))
 
     payers_created = 0
@@ -16,11 +17,19 @@ namespace :denormalize do
       payers_created += 1
     end
 
+    job = Job.find_by(name: "denormalize:payers")
+    job_run = job.job_runs.create({
+      start_time: start,
+      end_time: Time.now,
+      success: true,
+    })
+
     RestClient.post(
         ENV["SLACKWH"],
         JSON.dump({"text" => "(5/6): Facebook payer-denormalization went swimmingly. (#{payers_created} created)" }),
         {:content_type => "application/json"}
     )
+
 
   end
 

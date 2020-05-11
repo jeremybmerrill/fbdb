@@ -23,7 +23,7 @@ namespace :text do
   end
 
   task ads: :environment do 
-
+    start = Time.now
     def top_advertiser_page_ids 
       most_recent_lifelong_report_id = AdArchiveReport.where(kind: 'lifelong', loaded: true).order(:scrape_date).last.id
       starting_point_id = AdArchiveReport.starting_point.id
@@ -66,6 +66,13 @@ namespace :text do
         ads_hashed += 1
       end
     end
+    job = Job.find_by(name: "text:ads")
+    job_run = job.job_runs.create({
+      start_time: start,
+      end_time: Time.now,
+      success: true,
+    })
+
     RestClient.post(
         ENV["SLACKWH"],
         JSON.dump({"text" => "(4/6): text hashing for FB API ads went swimmingly. (#{ads_hashed} ads hashed)" }),
@@ -77,6 +84,7 @@ namespace :text do
     # eventually this'll be done by the ad catcher, with ATI (but for "collector ads", obvi)
     # writable_ad should be created for EVERY new ad.
     counter = 0
+    start = Time.now
 
     batch_size = 500
     FbpacAd.left_outer_joins(:writable_ad).where(writable_ads: {ad_id: nil}).find_in_batches(batch_size: batch_size).each do |new_ads|
@@ -91,6 +99,13 @@ namespace :text do
           wad.save!
       end
     end
+    job = Job.find_by(name: "text:fbpac_ads")
+    job_run = job.job_runs.create({
+      start_time: start,
+      end_time: Time.now,
+      success: true,
+    })
+    
     RestClient.post(
         ENV["SLACKWH"],
         JSON.dump({"text" => "(3/6): text hashing for collector ads went swimmingly. (#{counter} batches processed)" }),
