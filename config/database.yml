@@ -22,7 +22,7 @@ test:
 
 production:
   <<: *default
-  database: qzaifbdb
+  database: <%= ENV["PGDATABASE"] %>
   host: <%= ENV["PGHOST"] %>
   password: <%= ENV["PGPASSWORD"] %>
   username: <%= ENV["PGUSER"] %>
