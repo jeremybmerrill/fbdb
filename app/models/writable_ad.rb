@@ -1,4 +1,3 @@
-
 require 'aws-sdk-s3'
 
 class WritableAd < ApplicationRecord
@@ -11,7 +10,8 @@ class WritableAd < ApplicationRecord
 
 
   # for screenshots derived from Laura's DB.
-  BUCKET_NAME = "qz-aistudio-fbpac-ads"
+  BUCKET_NAME = ENV["IMAGES_S3_BUCKET"] # https://www.youtube.com/watch?v=36EdTXY2nUs&t=1s
+  AWS_REGION = ENV["AWS_REGION"]
   def gcs_url
     ENV["GCS_URL"] + archive_id.to_s + ".png"
   end
@@ -23,12 +23,12 @@ class WritableAd < ApplicationRecord
   end
 
   def http_s3_url
-    "https://qz-aistudio-fbpac-ads.s3.us-east-2.amazonaws.com/#{s3_path}"
+    "https://#{BUCKET_NAME}.s3.#{AWS_REGION}.amazonaws.com/#{s3_path}"
   end
 
   def copy_screenshot_to_s3!
     return if s3_url
-    s3 = Aws::S3::Resource.new(region:'us-east-2')
+    s3 = Aws::S3::Resource.new(region: AWS_REGION)
     obj = s3.bucket(BUCKET_NAME).object(s3_path)
     unless obj.exists?
       begin 
