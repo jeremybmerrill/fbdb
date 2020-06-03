@@ -40,6 +40,7 @@ yarn-debug.log*
 .yarn-integrity
 
 secrets.env
+secrets_qz.env
 terraform.tf
 .terraform/
 deploy/
