@@ -5,4 +5,4 @@
 #
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
 #   Character.create(name: 'Luke', movie: movies.first)
-ENV["USERS"]&.split(",")&.each{|user| User.find_by(email: "#{user}@qz.com") or User.create!({email: "#{user}@qz.com", password: ENV["DASHBOARDPW"], password_confirmation: ENV["DASHBOARDPW"]}) }
+ENV["USERS"]&.split(",")&.each{|user| User.find_by(email: user) or User.create!({email: user, password: ENV["DASHBOARDPW"], password_confirmation: ENV["DASHBOARDPW"]}) }
