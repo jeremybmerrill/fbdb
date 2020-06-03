@@ -21,13 +21,26 @@ module AtiDashboard
         origins 'http://pol-ad-dashboard.s3-website.us-east-2.amazonaws.com'
         resource '*', headers: :any, methods: [:get]
       end
-      
+      allow do
+        origins 'http://pol-ads-dashboard.s3-website-us-east-1.amazonaws.com'
+        resource '*', headers: :any, methods: [:get]
+      end
+
       allow do
         origins 'https://dashboard.qz.ai'
         resource '*', headers: :any, methods: [:get]
       end
       allow do
         origins 'https://dashboard-frontend.qz.ai'
+        resource '*', headers: :any, methods: [:get]
+      end
+
+      allow do
+        origins 'https://dashboard-frontend.ad-observatory.com'
+        resource '*', headers: :any, methods: [:get]
+      end
+      allow do
+        origins 'https://dashboard.ad-observatory.com'
         resource '*', headers: :any, methods: [:get]
       end
 
