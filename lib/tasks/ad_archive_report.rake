@@ -121,9 +121,9 @@ namespace :ad_archive_report do
         filenames.each do |filename|
             dest = filename.gsub(".zip", '')
             `unzip -n -d "#{dest}" "#{filename}"`
-            filename = Dir[File.join(dest, "FacebookAdLibraryReport*advertisers.csv")].first
-            date = Date.parse(File.basename(filename).split("_")[-4])
-            report = AdArchiveReport.find_or_create_by(scrape_date: date, s3_url: filename, kind: REPORT_TYPES.find{|n| File.basename(filename).include?(n)})
+            csv_filename = Dir[File.join(dest, "FacebookAdLibraryReport*advertisers.csv")].first
+            date = Date.parse(File.basename(csv_filename).split("_")[-4])
+            report = AdArchiveReport.find_or_create_by(scrape_date: date, s3_url: csv_filename, kind: REPORT_TYPES.find{|n| File.basename(csv_filename).include?(n)})
         end
     end
 
