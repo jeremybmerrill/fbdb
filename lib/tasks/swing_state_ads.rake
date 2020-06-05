@@ -42,7 +42,7 @@ namespace :swing_states do
 
     new_advertisers_text = advertiser_new_swing_ads_count.map{|page_id, cnt| "#{Page.find(page_id).page_name}: #{cnt}"}.join(", ")
 
-    msg = "(7/7): found #{count} swing state ads; #{stopped_being_swing_state_ads} stopped being swing state ads; #{new_advertisers_text}"
+    msg = "found #{count} swing state ads; #{stopped_being_swing_state_ads} stopped being swing state ads; #{new_advertisers_text}"
     puts msg
 
     job = Job.find_by(name: "swing_states:get")
@@ -56,7 +56,7 @@ namespace :swing_states do
         ENV["SLACKWH"],
         JSON.dump({"text" => msg }),
         {:content_type => "application/json"}
-    ) if count > 0 && ENV["SLACKWH"]
+    ) if ENV["SLACKWH"]
   end
   task clear: :environment do 
   #   WritableAd.update_all(swing_state_ad: false)

@@ -73,11 +73,11 @@ namespace :text do
       success: true,
     })
 
-    RestClient.post(
-        ENV["SLACKWH"],
-        JSON.dump({"text" => "(4/6): text hashing for FB API ads went swimmingly. (#{ads_hashed} ads hashed)" }),
-        {:content_type => "application/json"}
-    ) if ads_hashed > 0 && ENV["SLACKWH"]
+    # RestClient.post(
+    #     ENV["SLACKWH"],
+    #     JSON.dump({"text" => "(4/6): text hashing for FB API ads went swimmingly. (#{ads_hashed} ads hashed)" }),
+    #     {:content_type => "application/json"}
+    # ) if ads_hashed > 0 && ENV["SLACKWH"]
   end
 
   task fbpac_ads: ["page_ids:fbpac_ads", :environment] do 
@@ -106,11 +106,11 @@ namespace :text do
       success: true,
     })
     
-    RestClient.post(
-        ENV["SLACKWH"],
-        JSON.dump({"text" => "(3/6): text hashing for collector ads went swimmingly. (#{counter} batches processed)" }),
-        {:content_type => "application/json"}
-    ) if counter > 0 && ENV["SLACKWH"]
+    # RestClient.post(
+    #     ENV["SLACKWH"],
+    #     JSON.dump({"text" => "(3/6): text hashing for collector ads went swimmingly. (#{counter} batches processed)" }),
+    #     {:content_type => "application/json"}
+    # ) if ENV["SLACKWH"]
 
 
   end  

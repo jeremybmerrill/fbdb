@@ -45,7 +45,7 @@ namespace :text do
 
     RestClient.post(
         ENV["SLACKWH"],
-        JSON.dump({"text" => "(6/6): Facebook ad topic classification went swimmingly. (#{counter} batches processed)" }),
+        JSON.dump({"text" => "Facebook ad topic classification went swimmingly. (#{counter} batches processed)" }),
         {:content_type => "application/json"}
     ) if counter > 0
   end
