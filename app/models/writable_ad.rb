@@ -10,7 +10,7 @@ class WritableAd < ApplicationRecord
 
 
   # for screenshots derived from Laura's DB.
-  BUCKET_NAME = ENV["IMAGES_S3_BUCKET"] # https://www.youtube.com/watch?v=36EdTXY2nUs&t=1s
+  BUCKET_NAME = ENV["IMAGES_S3_BUCKET"]
   AWS_REGION = ENV["AWS_REGION"]
   def gcs_url
     ENV["GCS_URL"] + archive_id.to_s + ".png"

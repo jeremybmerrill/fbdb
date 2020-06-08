@@ -1,7 +1,7 @@
 
 
 SWING_STATES = ['Michigan', 'Wisconsin', 'Pennsylvania', 'Florida', 'Arizona', 'North Carolina', 'Nebraska', 'Georgia', 'Iowa', 'Ohio']
-LEANS = ["Maine", "Minnesota", "New Hampshire", "Georgia", "Texas"]
+LEANS = ["Maine", "Minnesota", "New Hampshire", "Texas"]
 # per Cook political report, 4/22/2020 https://cookpolitical.com/sites/default/files/2020-03/EC%20030920.4.pdf
 # Nebraska is just one CD, of course.
 
