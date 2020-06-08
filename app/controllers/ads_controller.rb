@@ -1,4 +1,3 @@
-require 'elasticsearch/dsl'
 class AdsController < ApplicationController
     PAGE_SIZE = 30
 
