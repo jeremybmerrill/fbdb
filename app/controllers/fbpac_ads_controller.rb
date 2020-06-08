@@ -1,6 +1,6 @@
 class FbpacAdsController < ApplicationController
     before_action :set_lang
-    skip_before_action :authenticate_user!, :except => [:suppress, :suppress_page]
+    skip_before_action :authenticate_user!, :except => [:suppress, :suppress_page, :collection_stats]
 
     caches_action :index, expires_in: 5.minutes, :cache_path => Proc.new {|c|  (c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";")).force_encoding("ascii-8bit") }
     caches_action :homepage_stats, expires_in: 60.minutes, :cache_path => Proc.new {|c|  c.request.url + (params[:lang] || "en-US") + c.request.query_parameters.except("lang").to_a.sort_by{|a, b| a }.map{|a|a.join(",")}.join(";") }
@@ -235,6 +235,45 @@ class FbpacAdsController < ApplicationController
         resp[:total] = ads.count
         render json: resp
     end
+
+    def collection_stats
+        # count of ads in language in the past day (via grouped by day for the past week)
+        # count of ads in language in the past week
+        @ads_by_day_this_week = FbpacAd.where(lang: @lang).unscope(:order).where("date(created_at) > now() - interval '1 week' ").group("date(created_at)").count
+        @ads_by_day_this_month = FbpacAd.where(lang: @lang).unscope(:order).where("date(created_at) > now() - interval '1 month' ").group("date(created_at)").count
+        @ads_today = @ads_by_day_this_week[Date.today] || 0
+        @ads_this_week = @ads_by_day_this_week.values.reduce(&:+)
+
+        # count of ads in language total
+        @political_ads_count = FbpacAd.where(lang: @lang).count
+
+        # last week's ratio of ads to political ads
+        @daily_political_ratio = FbpacAd.unscoped.where(lang: @lang).where("date(created_at) > now() - interval '1 week' ").group("date(created_at)").select("count(*) as total, sum(CASE political_probability > 0.7 AND NOT suppressed WHEN true THEN 1 ELSE 0 END) as political, date(created_at) as date").map{|ad| [ad.date, ad.political.to_f / ad.total, ad.total]}.sort_by{|date, ratio, total| date}
+
+        # rolling weekly ratio of ads to political ads
+        @weekly_political_ratio = FbpacAd.unscoped.where(lang: @lang).where("date(created_at) > now() - interval '2 months' ").group("extract(week from created_at), extract(year from created_at)").select("count(*) as total, sum(CASE political_probability > 0.7 AND NOT suppressed WHEN true THEN 1 ELSE 0 END) as political, extract(week from created_at) as week, extract(year from created_at) as year").sort_by{|ad| ad.year.to_s + ad.week.to_s }.sort_by{|ad| ad.year.to_s + ad.week.to_i.to_s.rjust(2, '0') }.map{|ad| [ad.week, ad.political.to_f / ad.total, ad.total]}
+
+        # datetime of last received ad
+        @last_received_at = FbpacAd.unscoped.where(lang: @lang).maximum(:created_at)
+
+
+        respond_to do |format|
+          format.html
+          format.json {
+            render json: {
+                        ads_this_week: @ads_this_week,
+                        ads_today: @ads_today,
+                        total_political_ads: @political_ads_count,
+                        daily_political_ratio: @daily_political_ratio,
+                        weekly_political_ratio: @weekly_political_ratio,
+                        last_received_at: @last_received_at
+                    }
+            }
+        end
+
+        
+    end
+
 
     private
 

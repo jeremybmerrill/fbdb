@@ -41,6 +41,7 @@ Rails.application.routes.draw do
 
   get "bigspenders", to: "pages#bigspenders"
 
+  get "fbpac_ads/collection_stats", to: "fbpac_ads#collection_stats"
 
   get "interim/youtube/", to: "youtube#index"
   get "interim/youtube/advertiser/:targ", to: "youtube#advertiser"

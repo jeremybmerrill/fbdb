@@ -1,0 +1,15 @@
+<h1>Crowdsourced Ad Collection Stats</h1>
+
+<h2><%= number_with_delimiter(@ads_today, :delimiter => ',') %> ads today</h2>
+<h2><%= number_with_delimiter(@ads_this_week, :delimiter => ',')  %> ads this week</h2>
+<h2><%= number_with_delimiter(@political_ads_count, :delimiter => ',') %> total</h2>
+<h2>Last ad at: <%= @last_received_at %> </h2>
+
+<h3>ads collected this month</h3>
+<%= line_chart @ads_by_day_this_month %>
+
+<h3>political ratio, days this week</h3>
+<%= line_chart @daily_political_ratio %>
+
+<h3>political ratio, weeks this year</h3>
+<%= line_chart @weekly_political_ratio %>

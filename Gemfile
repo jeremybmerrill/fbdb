@@ -9,6 +9,7 @@ gem 'aws-sdk-s3', '~> 1'
 gem 'will_paginate', '~> 3.1.0'
 gem 'pg'
 gem "pg_search"
+gem "chartkick"
 
 gem "couchrest"
 
