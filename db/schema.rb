@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_08_174349) do
+ActiveRecord::Schema.define(version: 2020_06_08_210935) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -55,6 +55,7 @@ ActiveRecord::Schema.define(version: 2020_05_08_174349) do
     t.text "paid_for_by"
     t.datetime "first_seen"
     t.datetime "last_seen"
+    t.index "to_tsvector('english'::regconfig, search_text)", name: "index_ads_on_search_text", using: :gin
     t.index ["advertiser"], name: "index_ad_texts_on_advertiser"
     t.index ["first_seen", "text_hash"], name: "index_ad_texts_on_first_seen_and_text_hash", order: { first_seen: :desc }
     t.index ["first_seen"], name: "index_ad_texts_on_first_seen"
@@ -65,6 +66,7 @@ ActiveRecord::Schema.define(version: 2020_05_08_174349) do
   end
 
   create_table "ad_topics", force: :cascade do |t|
+    t.bigint "archive_id"
     t.integer "topic_id"
     t.float "proportion"
     t.datetime "created_at", precision: 6, null: false
@@ -113,7 +115,7 @@ ActiveRecord::Schema.define(version: 2020_05_08_174349) do
   end
 
   create_table "demo_impressions_local", id: false, force: :cascade do |t|
-    t.bigint "ad_archive_id"
+    t.bigint "archive_id"
     t.integer "demo_id"
     t.integer "min_impressions"
     t.integer "max_impressions"
@@ -122,8 +124,8 @@ ActiveRecord::Schema.define(version: 2020_05_08_174349) do
     t.date "crawl_date"
     t.boolean "most_recent"
     t.bigint "nyu_id", default: -> { "nextval('demo_impressions_nyu_id1_seq'::regclass)" }, null: false
-    t.index ["ad_archive_id", "demo_id"], name: "demo_impressions_unique_ad_archive_id", unique: true
-    t.index ["ad_archive_id"], name: "demo_impressions_archive_id_idx"
+    t.index ["archive_id", "demo_id"], name: "demo_impressions_unique_ad_archive_id", unique: true
+    t.index ["archive_id"], name: "demo_impressions_archive_id_idx"
   end
 
   create_table "fbpac_ads", id: :text, force: :cascade do |t|
@@ -149,10 +151,11 @@ ActiveRecord::Schema.define(version: 2020_05_08_174349) do
     t.text "targetings", array: true
     t.text "paid_for_by"
     t.integer "targetedness"
-    t.decimal "listbuilding_fundraising_proba", precision: 9, scale: 6
+    t.float "listbuilding_fundraising_proba"
     t.bigint "page_id"
     t.index ["advertiser"], name: "index_fbpac_ads_on_advertiser"
     t.index ["entities"], name: "index_fbpac_ads_on_entities", using: :gin
+    t.index ["id"], name: "index_fbpac_ads_on_id"
     t.index ["lang"], name: "index_fbpac_ads_on_browser_lang"
     t.index ["lower_page"], name: "fbpac_ads_lower_page_idx"
     t.index ["page"], name: "index_fbpac_ads_on_page"
@@ -161,7 +164,7 @@ ActiveRecord::Schema.define(version: 2020_05_08_174349) do
   end
 
   create_table "impressions_local", id: false, force: :cascade do |t|
-    t.bigint "ad_archive_id"
+    t.bigint "archive_id"
     t.date "crawl_date"
     t.integer "min_impressions"
     t.integer "min_spend"
@@ -169,8 +172,8 @@ ActiveRecord::Schema.define(version: 2020_05_08_174349) do
     t.integer "max_spend"
     t.boolean "most_recent"
     t.bigint "nyu_id", default: -> { "nextval('impressions_nyu_id1_seq'::regclass)" }, null: false
-    t.index ["ad_archive_id"], name: "impressions_archive_id_idx"
-    t.index ["ad_archive_id"], name: "impressions_unique_ad_archive_id", unique: true
+    t.index ["archive_id"], name: "impressions_archive_id_idx"
+    t.index ["archive_id"], name: "impressions_unique_ad_archive_id", unique: true
   end
 
   create_table "job_runs", force: :cascade do |t|
@@ -206,7 +209,7 @@ ActiveRecord::Schema.define(version: 2020_05_08_174349) do
   end
 
   create_table "region_impressions_local", id: false, force: :cascade do |t|
-    t.bigint "ad_archive_id"
+    t.bigint "archive_id"
     t.integer "region_id"
     t.integer "min_impressions"
     t.integer "min_spend"
@@ -215,8 +218,8 @@ ActiveRecord::Schema.define(version: 2020_05_08_174349) do
     t.date "crawl_date"
     t.boolean "most_recent"
     t.bigint "nyu_id", default: -> { "nextval('region_impressions_nyu_id1_seq'::regclass)" }, null: false
-    t.index ["ad_archive_id", "region_id"], name: "region_impressions_unique_ad_archive_id", unique: true
-    t.index ["ad_archive_id"], name: "region_impressions_archive_id_idx"
+    t.index ["archive_id", "region_id"], name: "region_impressions_unique_ad_archive_id", unique: true
+    t.index ["archive_id"], name: "region_impressions_archive_id_idx"
   end
 
   create_table "regions", id: :serial, force: :cascade do |t|
