@@ -1,0 +1,70 @@
+<h1><a href="/">Political Facebook Ads Dashboard</a></h1>
+
+<h2>top spenders in <%= @state_name %></h2>
+<p>since 5/1/2020, only including ads shown >30% in state</p>
+
+<table>
+	<% @res.to_a.each do |item| %>
+		<tr>
+			<td><a href="https://dashboard.ad-observatory.com/advertiser/<%= item["page_name"] %>"><%= item["page_name"] %></a></td>
+			<td>$<%= number_with_delimiter(item["region_spend"].to_i) %></td>
+		</tr>
+	<% end %>
+</table>
+
+
+<h3>Other states</h3>
+<div>
+
+<a href="/ads/state/Alabama">Alabama</a>
+<a href="/ads/state/Alaska">Alaska</a>
+<a href="/ads/state/Arizona">Arizona</a>
+<a href="/ads/state/Arkansas">Arkansas</a>
+<a href="/ads/state/California">California</a>
+<a href="/ads/state/Colorado">Colorado</a>
+<a href="/ads/state/Connecticut">Connecticut</a>
+<a href="/ads/state/Delaware">Delaware</a>
+<a href="/ads/state/Florida">Florida</a>
+<a href="/ads/state/Georgia">Georgia</a>
+<a href="/ads/state/Hawaii">Hawaii</a>
+<a href="/ads/state/Idaho">Idaho</a>
+<a href="/ads/state/Illinois">Illinois</a>
+<a href="/ads/state/Indiana">Indiana</a>
+<a href="/ads/state/Iowa">Iowa</a>
+<a href="/ads/state/Kansas">Kansas</a>
+<a href="/ads/state/Kentucky">Kentucky</a>
+<a href="/ads/state/Louisiana">Louisiana</a>
+<a href="/ads/state/Maine">Maine</a>
+<a href="/ads/state/Maryland">Maryland</a>
+<a href="/ads/state/Massachusetts">Massachusetts</a>
+<a href="/ads/state/Michigan">Michigan</a>
+<a href="/ads/state/Minnesota">Minnesota</a>
+<a href="/ads/state/Mississippi">Mississippi</a>
+<a href="/ads/state/Missouri">Missouri</a>
+<a href="/ads/state/Montana">Montana</a>
+<a href="/ads/state/Nebraska">Nebraska</a>
+<a href="/ads/state/Nevada">Nevada</a>
+<a href="/ads/state/New Hampshire">New Hampshire</a>
+<a href="/ads/state/New Jersey">New Jersey</a>
+<a href="/ads/state/New Mexico">New Mexico</a>
+<a href="/ads/state/New York">New York</a>
+<a href="/ads/state/North Carolina">North Carolina</a>
+<a href="/ads/state/North Dakota">North Dakota</a>
+<a href="/ads/state/Ohio">Ohio</a>
+<a href="/ads/state/Oklahoma">Oklahoma</a>
+<a href="/ads/state/Oregon">Oregon</a>
+<a href="/ads/state/Pennsylvania">Pennsylvania</a>
+<a href="/ads/state/Rhode Island">Rhode Island</a>
+<a href="/ads/state/South Carolina">South Carolina</a>
+<a href="/ads/state/South Dakota">South Dakota</a>
+<a href="/ads/state/Tennessee">Tennessee</a>
+<a href="/ads/state/Texas">Texas</a>
+<a href="/ads/state/Utah">Utah</a>
+<a href="/ads/state/Vermont">Vermont</a>
+<a href="/ads/state/Virginia">Virginia</a>
+<a href="/ads/state/Washington">Washington</a>
+<a href="/ads/state/Washington, District of Columbia">Washington, District of Columbia</a>
+<a href="/ads/state/West Virginia">West Virginia</a>
+<a href="/ads/state/Wisconsin">Wisconsin</a>
+<a href="/ads/state/Wyoming">Wyoming</a>
+</div>

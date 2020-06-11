@@ -30,6 +30,7 @@ Rails.application.routes.draw do
   get "ads/search/", to: "ads#jeremys_double_method_search"
   get "ads/list_targets", to: "ads#list_targets"
   get "ads/pivot/:kind", to: "fbpac_ads#pivot"
+  get "ads/state/:state", to: "ads#state"
 
   get "ads/:archive_id", to: "ads#show"
   get "ads_by_ad_id/:ad_id", to: "ads#show"
