@@ -4,10 +4,16 @@
 <p>since 5/1/2020, only including ads shown >30% in state</p>
 
 <table>
-	<% @res.to_a.each do |item| %>
+	<% @res.select{|item| item["currency"] == "USD" }.to_a.each do |item| %>
 		<tr>
 			<td><a href="https://dashboard.ad-observatory.com/advertiser/<%= item["page_name"] %>"><%= item["page_name"] %></a></td>
-			<td>$<%= number_with_delimiter(item["region_spend"].to_i) %></td>
+			<td><%= item["currency"] == "USD" ? "$" : item["currency"] %><%= number_with_delimiter(item["region_spend"].to_i) %></td>
+		</tr>
+	<% end %>
+	<% @res.select{|item| item["currency"] != "USD" }.to_a.each do |item| %>
+		<tr>
+			<td><a href="https://dashboard.ad-observatory.com/advertiser/<%= item["page_name"] %>"><%= item["page_name"] %></a></td>
+			<td><%= item["currency"] == "USD" ? "$" : item["currency"] %><%= number_with_delimiter(item["region_spend"].to_i) %></td>
 		</tr>
 	<% end %>
 </table>
