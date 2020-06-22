@@ -12,6 +12,8 @@
   <p><%= ad.ad_creative_link_title %></p>
   <p><%= ad.ad_creative_link_description %></p>
   <p><%= ad.ad_creative_link_caption %></p>
+  <p>start: <%= wad.created_at %> end: <%= wad.updated_at %></p>
+
   <p><b>Swing states:</b> <%= states.compact.join(", ") %></p>
 
   <% if wad.ad_text.topics.reject{|text| text == "none"}.size >= 1 %> 

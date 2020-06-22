@@ -574,12 +574,8 @@ class AdsController < ApplicationController
     end
 
     def swing_state_ads
-        wads = WritableAd.where(:swing_state_ad => true).where("page_id not in (6756153498, 416707608450706)").includes(ad: {impressions_record: {}}, ad_text: {topics: {}}, writable_page: {})
-
-        # really what we want is the AdText model.
-        # so we can show each ad only once (merging the state and target lists)
-
-
+        start_date = params[:start_date] || (Date.today - 1.month)
+        wads = WritableAd.where(:swing_state_ad => true).where("page_id not in (6756153498, 416707608450706)").where("created_at > ?", start_date).includes(ad: {impressions_record: {}}, ad_text: {topics: {}}, writable_page: {})
 
         partisanship_topic_counts = wads.map{|wad| wad.ad_text.topics.reject{|text| text == "none"}.map{|topic| [wad.writable_page.partisanship, topic.topic] } }.flatten(1).group_by{|partisanship, topic| partisanship}.map{|partisanship, topics| [partisanship, topics.group_by{|_, topic| topic }.map{|topic, rows| [topic, rows.count]}] }
         partisanship_ad_counts = Hash[*wads.group_by{|wad| wad.writable_page.partisanship }.map{|partisanship, rows| [partisanship, rows.count]}.flatten]
@@ -588,7 +584,10 @@ class AdsController < ApplicationController
         # {"dem": {"China": 0.5, "Immigration": 0.2}}
         @partisanship_topic_proportions = @partisanship_topic_proportions.map{|partisanship, topic_proportions| [partisanship, topic_proportions.sort_by{|topic, prop| -prop}]}
 
+
         @partisanship_spend = wads.group_by{|wad| wad.writable_page.partisanship }.map{|partisanship, wads| [partisanship, wads.map{|wad| wad.ad.impressions_record.min_spend }.reduce(&:+), wads.map{|wad| wad.ad.impressions_record.max_spend }.reduce(&:+)] }
+
+        @last_updated_at = wads.pluck(:updated_at).max
 
         @grouped = wads.group_by(&:page_id).map{|page_id, page_wads| [page_id, page_wads.group_by{|wad| wad.text_hash }] }
 
