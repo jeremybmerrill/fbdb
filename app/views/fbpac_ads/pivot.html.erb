@@ -9,17 +9,17 @@
       <tr>
         <td>
           <% if @kind_of_thing == "segments" %> 
-            <a href="https://dashboard.qz.ai/search?targeting=<%= CGI.escape(JSON.dump([thing])) %>">
+            <a href="https://dashboard.ad-observatory.com/search?targeting=<%= CGI.escape(JSON.dump([thing])) %>">
           <% elsif @kind_of_thing == "targets" %> 
-            <a href="https://dashboard.qz.ai/search?targeting=<%= CGI.escape(JSON.dump([[thing, nil]])) %>">          
+            <a href="https://dashboard.ad-observatory.com/search?targeting=<%= CGI.escape(JSON.dump([[thing, nil]])) %>">          
           <% elsif @kind_of_thing == "paid_for_by" %> 
             <% if thing.nil? %>
-              <a href="https://dashboard.qz.ai/search?no_payer=true">
+              <a href="https://dashboard.ad-observatory.com/search?no_payer=true">
             <% else %>
-              <a href="https://dashboard.qz.ai/payer/<%= thing %>">
+              <a href="https://dashboard.ad-observatory.com/payer/<%= thing %>">
             <% end %>
           <% elsif @kind_of_thing == "advertiser" %> 
-            <a href="https://dashboard.qz.ai/advertiser/<%= thing %>">          
+            <a href="https://dashboard.ad-observatory.com/advertiser/<%= thing %>">          
           <% end %>
             <%= @kind_of_thing == "segments" ? thing.compact.join(" → ") : (thing.nil? ? '(none)' : thing)  %>
           </a>
