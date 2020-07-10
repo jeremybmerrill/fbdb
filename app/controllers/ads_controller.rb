@@ -606,10 +606,10 @@ class AdsController < ApplicationController
     end
 
     def state
-        @state_name = params["state"]
+        @state_name = params["state"] 
+        @start_date = params[:start_date] || "2020-05-01"
 
-        @res = Ad.connection.exec_query("select page_name, sum(spend_percentage * min_spend) region_spend, min(currency) currency from ads join pages using (page_id) join region_impressions using (archive_id) join impressions using (archive_id) where region = $1 and spend_percentage > 0.30 and min_impressions > 0 and ad_creation_time > '2020-05-01' and (ad_delivery_stop_time is null or ad_delivery_stop_time > '2020-05-01') group by page_name order by region_spend desc limit 50;", 'SQL', [[nil, @state_name]])
-        puts @res
+        @res = Ad.connection.exec_query("select page_name, sum(spend_percentage * min_spend) region_spend, min(currency) currency from ads join pages using (page_id) join region_impressions using (archive_id) join impressions using (archive_id) where region = $1 and spend_percentage > 0.30 and min_impressions > 0 and ad_creation_time > $2 and (ad_delivery_stop_time is null or ad_delivery_stop_time > $2) group by page_name order by region_spend desc limit 50;", 'SQL', [[nil, @state_name],[nil, @start_date]])
     end
 
     def topics

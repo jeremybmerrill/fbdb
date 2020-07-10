@@ -1,7 +1,7 @@
 <h1><a href="/">Political Facebook Ads Dashboard</a></h1>
 
 <h2>top spenders in <%= @state_name %></h2>
-<p>since 5/1/2020, only including ads shown >30% in state</p>
+<p>since <%= @start_date %>, only including ads shown >30% in state</p>
 
 <table>
 	<% @res.select{|item| item["currency"] == "USD" }.to_a.each do |item| %>
