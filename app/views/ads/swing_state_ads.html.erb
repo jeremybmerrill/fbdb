@@ -61,7 +61,7 @@ TODO:
 <div>
   <% @grouped.each do |page_id, text_hash_page_wads| %>
     <h3><%= @page_names[page_id] %></h3>
-    <% text_hash_page_wads.each do |text_hash, wads| %>
+    <% text_hash_page_wads.sort_by{|text_hash, wads| wads.first.created_at }.reverse.each do |text_hash, wads| %>
       <%= render "ads/ad", 
             page_name: @page_names[page_id], 
             wad: wads.first, 
