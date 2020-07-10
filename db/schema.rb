@@ -42,6 +42,23 @@ ActiveRecord::Schema.define(version: 2020_06_08_210935) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
+  create_table "ad_library_report_pages", primary_key: "ad_library_report_page_id", id: :serial, force: :cascade do |t|
+    t.integer "ad_library_report_id"
+    t.bigint "page_id"
+    t.text "disclaimer"
+    t.integer "amount_spent"
+    t.integer "ads_count"
+  end
+
+  create_table "ad_library_reports", primary_key: "ad_library_report_id", id: :serial, force: :cascade do |t|
+    t.date "report_date"
+    t.text "kind"
+    t.text "csv_fn"
+    t.text "zip_url"
+    t.boolean "loaded", default: false
+    t.text "geography"
+  end
+
   create_table "ad_texts", force: :cascade do |t|
     t.text "text"
     t.string "text_hash"
