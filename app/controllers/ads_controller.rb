@@ -25,7 +25,7 @@ class AdsController < ApplicationController
 
         respond_to do |format|
           format.html {
-            redirect_to "https://dashboard.qz.ai/ad/#{ad_text.text_hash}"
+            redirect_to "https://dashboard.ad-observatory.com/ad/#{ad_text.text_hash}"
           }
           format.json { render json: {
             ad_text: ad_text
