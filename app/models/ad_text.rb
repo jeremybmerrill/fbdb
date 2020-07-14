@@ -52,7 +52,7 @@ class AdText < ApplicationRecord
 
       # Ad lookups (from the HL server takes 130ms each)
       # So we only do it if we dont' have any FBPAC examples.
-      new_json["variants"] = json["writable_ads"].select{|wad| wad.has_key?("fbpac_ad")}.first(3).map{|ad| ad["fbpac_ad"]}
+      new_json["variants"] = json["writable_ads"].select{|wad| wad.has_key?("fbpac_ad")}.map{|ad| ad["fbpac_ad"]}
       new_json["variants"] = json["writable_ads"].select{|ad| ad["archive_id"]}.first(1).map do |ad| 
         if options[:ads]
           options[:ads].find{|other_ad| other_ad.archive_id == ad["archive_id"]}
