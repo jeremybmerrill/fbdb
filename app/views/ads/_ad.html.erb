@@ -20,6 +20,13 @@
     <p><b>Topics:</b> <%= wad.ad_text.topics.reject{|text| text == "none"}.map(&:topic) %></p>
   <% end %>
   <% if wad.ad_text.fbpac_ads.size >= 1 && ad.ad_creative_body %>
-    <p><b>How was this targeted?:</b> <%= wad.ad_text.fbpac_ads.map(&:targets).compact.first %></p>
+    <p><b>How was this targeted?:</b> 
+      <uL>
+      <% wad.ad_text.fbpac_ads.map(&:targets).compact.flatten.group_by{|targ| targ["target"]}.each do |target, targs| %>
+        <% next if ["MinAge", "MaxAge"].include?(target) %>
+        <li><%= target %>: <%= targs.map{|targ| targ["segment"]}.uniq.join(", ") %> </li>
+      <% end %>
+      </ul>
+    </p>
   <% end %>
 </div>
