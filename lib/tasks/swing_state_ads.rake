@@ -1,9 +1,14 @@
 
 
-SWING_STATES = ['Michigan', 'Wisconsin', 'Pennsylvania', 'Florida', 'Arizona', 'North Carolina', 'Nebraska', 'Georgia', 'Iowa', 'Ohio', 'Texas']
-LEANS = ["Maine", "Minnesota", "New Hampshire", "Texas"]
+SWING_STATES = ['Michigan', 'Wisconsin', 'Pennsylvania', 'Florida', 'Arizona', 'North Carolina', 'Nebraska', 'Georgia', 'Iowa', 'Ohio']
+LEAN_STATES = ["Maine", "Minnesota", "New Hampshire", "Texas", 'Virginia', 'Colorado', 'Nevada']
 # per Cook political report, 4/22/2020 https://cookpolitical.com/sites/default/files/2020-03/EC%20030920.4.pdf
 # Nebraska is just one CD, of course.
+
+# let's ignore the leans, entirely (from both numerator and denominator)
+
+
+SWING_STATE_CUTOFF = 0.80
 
 namespace :swing_states do 
   task get: :environment do 
@@ -15,6 +20,8 @@ namespace :swing_states do
     advertiser_new_swing_ads_count = {}
 
     WritablePage.where(core: true).each do |wpage|
+      puts ""
+      puts wpage.page.page_name
       resp = Ad.connection.execute("
           SELECT 
           ad_creative_body, 
@@ -25,15 +32,16 @@ namespace :swing_states do
         where page_id = #{wpage.page_id}  and ad_creation_time > '#{(Date.today - 60).to_s}'
         and (ad_delivery_stop_time is null or ad_delivery_stop_time > '#{(Date.today - 30).to_s}') group by ad_creative_body, region;")
       ads = resp.group_by{|row| row["ad_creative_body"]}.map do |ad_creative_body, state_rows| 
+        non_lean_state_rows = state_rows.reject{|state_row| LEAN_STATES.include?(state_row["region"]) }
         {
           ad_creative_body: ad_creative_body,
-          total_min_spend: state_rows.map{|row| row["min_spend"].to_i }.reduce(&:+), 
-          archive_id: state_rows.map{|row| row["archive_id"]}[0],
-          swing_state_min_spend: state_rows.select{|state_row| SWING_STATES.include?(state_row["region"])}.map{|state_row| state_row["min_spend"].to_i }.reduce(&:+),
-          swing_states: state_rows.select{|state_row| SWING_STATES.include?(state_row["region"]) }.select{|state_row| (state_row["min_spend"].to_f / state_rows.map{|row| row["min_spend"].to_i }.reduce(&:+)) > 0.05 }.map{|state_row| state_row["region"]}
+          total_min_spend: non_lean_state_rows.map{|row| row["min_spend"].to_i }.reduce(&:+) || 0, 
+          archive_id: non_lean_state_rows.map{|row| row["archive_id"]}[0],
+          swing_state_min_spend: non_lean_state_rows.select{|state_row| SWING_STATES.include?(state_row["region"])}.map{|state_row| state_row["min_spend"].to_i }.reduce(&:+) || 0,
+          swing_states: non_lean_state_rows.select{|state_row| SWING_STATES.include?(state_row["region"]) }.select{|state_row| (state_row["min_spend"].to_f / state_rows.map{|row| row["min_spend"].to_i }.reduce(&:+)) > 0.05 }.map{|state_row| state_row["region"]}
         }
       end
-      grouped = ads.group_by{|ad_row| ad_row[:swing_state_min_spend].to_f / ad_row[:total_min_spend] > 0.80 && ad_row[:swing_states].size > 1 }
+      grouped = ads.group_by{|ad_row| (ad_row[:swing_state_min_spend].to_f / ad_row[:total_min_spend] > SWING_STATE_CUTOFF) && ad_row[:swing_states].size > 1 }
       swing_state_ads = grouped[true]
       non_swing_state_ads = grouped[false]
       
@@ -55,7 +63,7 @@ namespace :swing_states do
         wad.swing_state_ad = true
         wad.states = ad_row[:swing_states]
         wad.save!
-        # wad.copy_screenshot_to_s3!
+        wad.copy_screenshot_to_s3! if ENV['AWS_REGION']
       end if swing_state_ads
       non_swing_state_ads.each do |ad_row|
         text_hash = Digest::SHA1.hexdigest(ad_row[:ad_creative_body].to_s.strip.downcase.gsub(/\s+/, ' ').gsub(/[^a-z 0-9]/, ''))
