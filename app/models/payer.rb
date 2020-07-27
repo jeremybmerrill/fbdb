@@ -20,7 +20,7 @@ class Payer < ApplicationRecord
 
 	def min_impressions
 		#ads.joins(:impressions).group(:ad_archive_id).max(:crawl_date).sum(:min_impressions)
-		ads.joins(:impressions).sum(:min_impressions)
+		ads.joins(:impressions_record).sum(:min_impressions)
 	end
 
 	# TODO should go in a mixin.
