@@ -7,7 +7,7 @@ namespace :text do
   task topics: :environment do 
     counter = 0
     start = Time.now
-    WritablePage.where(core: true).where( :ad_topics => { :ad_text_id => nil } ).each do |wpage|
+    WritablePage.where(core: true).joins({:ad_texts => :ad_topics}).where( :ad_topics => { :ad_text_id => nil } ).each do |wpage|
       wpage.ad_texts.find_in_batches(batch_size: 16) do |texts|
           counter += texts.size
         retried = 0
