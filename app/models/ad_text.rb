@@ -60,7 +60,9 @@ class AdText < ApplicationRecord
           Ad.find(ad["archive_id"])
         end
       end if new_json["variants"].size == 0
-
+      new_json["variants"].map!(&:as_json)
+      new_json["variants"].each{|var| var["text_hash"] = self.text_hash}
+      new_json["targets"] = new_json["variants"].map{|var| var["targets"] }.flatten.uniq
       new_json
   end
 
